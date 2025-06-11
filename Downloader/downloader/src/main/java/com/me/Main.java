@@ -1,7 +1,8 @@
-package com.example;
+package com.me;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
@@ -13,14 +14,17 @@ import org.asynchttpclient.Dsl;
 import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.Response;
 
+
+
 public class Main {
     public static void main(String[] args) throws Exception {
-        Scanner scan = new Scanner(System.in);
-        System.out.println("Inserisci l'URL del video:");
-        String fileUrl = scan.nextLine().trim(), filePath;
-        System.out.println("Inserisci la posizione (percorso della cartella) dove verrà salvato il file:\nInserisci anche il nome del file alla fine se vuoi dargli un particolare nome con estensione \".mp4\":");
-        filePath = scan.nextLine().trim();
-        scan.close();
+        String fileUrl, filePath;
+        try (Scanner scan = new Scanner(System.in)) {
+            System.out.println("Inserisci l'URL del video:");
+            fileUrl = scan.nextLine().trim();
+            System.out.println("Inserisci la posizione (percorso della cartella) dove verrà salvato il file:\nInserisci anche il nome del file alla fine se vuoi dargli un particolare nome con estensione \".mp4\":");
+            filePath = scan.nextLine().trim();
+        }
 
         AsyncHttpClientConfig config = Dsl.config()
             .setConnectTimeout(30_000)
@@ -67,12 +71,12 @@ public class Main {
                 System.err.println("\nErrore durante il download: " + t.getMessage());
                 try {
                     opStream.close();
-                } catch (Exception ignored) {}
+                } catch (IOException ignored) {}
                 downloadComplete.completeExceptionally(t);
             }
         });
 
-        // ✅ Qui attendi il completamento e poi chiudi il client in modo sicuro
+        // Qui attendi il completamento e poi chiudi il client in modo sicuro
         try {
             downloadComplete.join(); // blocca il thread principale finché non finisce
         } finally {
