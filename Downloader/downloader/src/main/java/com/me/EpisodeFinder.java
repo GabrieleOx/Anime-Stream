@@ -1,8 +1,6 @@
 package com.me;
 
 import java.io.IOException;
-import java.io.PrintStream;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
@@ -12,14 +10,14 @@ import org.asynchttpclient.Dsl;
 public class EpisodeFinder {
 
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
+        int n = 13;
         //OnePiece_Ep_001_ITA.mp4
-        String baseUrl = "https://srv30.sake.streampeaker.org/DDL/ANIME/OnePieceITA/";
+        //https://srv30.sake.streampeaker.org/DDL/ANIME/OnePieceITA/
+        String baseUrl = "https://srv27.baiku.streampeaker.org/DDL/ANIME/KuroshitsujiMidoriNoMajo-hen/";
         ArrayList<String> episodes = new ArrayList<>();
         int i = 1;
-        PrintStream originalOut = System.out;
-        System.setOut(null);
         while(true){
-            String name = nameComposer(i, baseUrl);
+            String name = nameComposer(i, baseUrl, n);
             if(!isPresent(name))
                 break;
             else {
@@ -27,8 +25,11 @@ public class EpisodeFinder {
             }
             i++;
         }
-        System.setOut(originalOut);
-        System.out.println(episodes);
+        System.out.println("[Episodi presenti:");
+        for(String s : episodes){
+            System.out.println(s + ";");
+        }
+        System.out.println("]");
     }
 
     public static boolean isPresent(String url) throws IOException, InterruptedException, ExecutionException{
@@ -50,20 +51,10 @@ public class EpisodeFinder {
         arr[0] = val;
     }
 
-    private static String nameComposer(int epNumber, String baseUrl){
+    private static String nameComposer(int epNumber, String baseUrl, int totEpisodi){
         StringBuilder nEpisode = new StringBuilder();
-        nEpisode.append(Math.abs(epNumber));
-        int len = nEpisode.length();
-        nEpisode.delete(0, len);
         nEpisode.append("_Ep_");
-        if(len == 1){
-            nEpisode.append(0);
-            nEpisode.append(0);
-            nEpisode.append(epNumber);
-        }else if(len == 2){
-            nEpisode.append(0);
-            nEpisode.append(epNumber);
-        }else nEpisode.append(epNumber);
+        nEpisode.append(numeroEpisodio(epNumber, totEpisodi));
 
         int slash = 0, urlLen = baseUrl.length(), j = urlLen;
         while(slash < 2){
@@ -77,9 +68,30 @@ public class EpisodeFinder {
         if(ita){
             nEpisode.append("_ITA");
             ep = serie.substring(0, serie.length() - 3) + nEpisode + ".mp4";
-        }else ep = serie + nEpisode + ".mp4";
+        }else {
+            nEpisode.append("_SUB_ITA");
+            ep = serie + nEpisode + ".mp4";
+        }
 
+        System.out.println(baseUrl + ep);
         return baseUrl + ep;
+    }
+
+    private static String numeroEpisodio(int n, int nEpisodes){
+        int nZeroes = 0, nCiphers = 0, nCopy = n;
+        while(nEpisodes > 9){
+            nZeroes++;
+            nEpisodes /= 10;
+        }
+        while(nCopy > 9){
+            nCiphers++;
+            nCopy /= 10;
+        }
+        StringBuilder num = new StringBuilder();
+        for(int i = 0; i < (nZeroes - nCiphers); i++)
+            num.append(0);
+        num.append(n);
+        return num.toString();
     }
 }
 
