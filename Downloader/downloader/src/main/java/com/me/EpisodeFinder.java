@@ -2,6 +2,7 @@ package com.me;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
 import org.asynchttpclient.AsyncHttpClient;
@@ -9,15 +10,27 @@ import org.asynchttpclient.Dsl;
 
 public class EpisodeFinder {
 
-    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
-        int n = 10;
-        //https://srv30.sake.streampeaker.org/DDL/ANIME/OnePieceITA/
-        //https://srv27.baiku.streampeaker.org/DDL/ANIME/Kuroshitsuji/
-        String baseUrl = "https://srv23.shiro.streampeaker.org/DDL/ANIME/Kuroshitsuji/";
+    public static ArrayList<String> getEpisodeList(Scanner scan) throws IOException, ExecutionException, InterruptedException{
+        String [] baseUrl = new String[3];
+        baseUrl[0] = "https://srv30.sake.streampeaker.org/DDL/ANIME/OnePieceITA/";
+        baseUrl[1] = "https://srv27.baiku.streampeaker.org/DDL/ANIME/KuroshitsujiMidoriNoMajo-hen/";
+        baseUrl[2] = "https://srv23.shiro.streampeaker.org/DDL/ANIME/Kuroshitsuji/";
         ArrayList<String> episodes = new ArrayList<>();
-        int i = 1;
+        int i = 1, selectedUrl, n;
+
+        System.out.println("Anime presenti:\n1)One piece ITA\n2)Black butler: Strega verde\n3)Black butler");
+        do{
+            selectedUrl = scan.nextInt();
+        }while(selectedUrl < 1 || selectedUrl > 3);
+
+        System.out.println("In che ordine di grandezza sono gli episodi (1 -> da 1 a 9; 10 -> da 1 a 99 ecc...)?");
+        n = scan.nextInt();
+
+        scan.nextLine();
+
+        selectedUrl--;
         while(true){
-            String name = nameComposer(i, baseUrl, n);
+            String name = nameComposer(i, baseUrl[selectedUrl], n);
             if(!isPresent(name))
                 break;
             else {
@@ -30,6 +43,8 @@ public class EpisodeFinder {
             System.out.println(s + ";");
         }
         System.out.println("]");
+
+        return episodes;
     }
 
     public static boolean isPresent(String url) throws IOException, InterruptedException, ExecutionException{
