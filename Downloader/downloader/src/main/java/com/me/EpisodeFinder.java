@@ -10,10 +10,10 @@ import org.asynchttpclient.Dsl;
 public class EpisodeFinder {
 
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
-        int n = 13;
-        //OnePiece_Ep_001_ITA.mp4
+        int n = 10;
         //https://srv30.sake.streampeaker.org/DDL/ANIME/OnePieceITA/
-        String baseUrl = "https://srv27.baiku.streampeaker.org/DDL/ANIME/KuroshitsujiMidoriNoMajo-hen/";
+        //https://srv27.baiku.streampeaker.org/DDL/ANIME/Kuroshitsuji/
+        String baseUrl = "https://srv23.shiro.streampeaker.org/DDL/ANIME/Kuroshitsuji/";
         ArrayList<String> episodes = new ArrayList<>();
         int i = 1;
         while(true){
@@ -21,7 +21,7 @@ public class EpisodeFinder {
             if(!isPresent(name))
                 break;
             else {
-                episodes.add(name.substring(baseUrl.length(), name.length()));
+                episodes.add(name);
             }
             i++;
         }
