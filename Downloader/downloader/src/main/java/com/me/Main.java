@@ -93,7 +93,7 @@ public class Main {
         StringBuilder fileName = new StringBuilder();
         int posSlash = url.length() - 1;
         while(true){
-            if(url.charAt(posSlash) != '\\')
+            if(url.charAt(posSlash) != '/')
                 fileName.append(url.charAt(posSlash));
             else break;
             posSlash--;
