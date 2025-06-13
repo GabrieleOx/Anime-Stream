@@ -15,6 +15,7 @@ public class EpisodeFinder {
     public static ArrayList<String> getEpisodeList(Scanner scan) throws IOException, ExecutionException, InterruptedException{
         ArrayList<String> episodes = new ArrayList<>(), anime = new ArrayList<>();
         ArrayList<Integer> nEpisodes = new ArrayList<>();
+        ArrayList<Boolean> abslouteITA = new ArrayList<>();
         int i = 1, selectedUrl;
         File links = new File(System.getProperty("user.dir")+"\\folders.txt");
 
@@ -26,7 +27,7 @@ public class EpisodeFinder {
             if(links.length() == 0){
                 System.out.println("Non sono presenti anime...");
                 System.exit(0);
-            }else reader(olFolders, anime, nEpisodes);
+            }else reader(olFolders, anime, nEpisodes, abslouteITA);
         }
 
         System.out.println("Anime presenti:");
@@ -39,8 +40,8 @@ public class EpisodeFinder {
         scan.nextLine();
 
         selectedUrl--;
-        while(true){
-            String name = nameComposer(i, anime.get(selectedUrl), nEpisodes.get(selectedUrl));
+        while(i <= 100){
+            String name = nameComposer(i, anime.get(selectedUrl), nEpisodes.get(selectedUrl), abslouteITA.get(selectedUrl));
             if(!isPresent(name))
                 break;
             else {
@@ -71,17 +72,23 @@ public class EpisodeFinder {
         arr[0] = val;
     }
 
-    private static String nameComposer(int epNumber, String baseUrl, int totEpisodi){
+    private static String nameComposer(int epNumber, String baseUrl, int totEpisodi, boolean absITA){
         StringBuilder nEpisode = new StringBuilder();
         nEpisode.append("_Ep_");
         nEpisode.append(numeroEpisodio(epNumber, totEpisodi));
 
         String serie = getAnimeName(baseUrl), ep;
-        boolean ita = serie.substring(serie.length() - 3, serie.length()).equals("ITA");
+        boolean ita = serie.substring(serie.length() - 3, serie.length()).equals("ITA"), subIta = serie.substring(serie.length() - 6, serie.length()).equals("SUBITA");
         
-        if(ita){
+        if(absITA){
+            nEpisode.append("_ITA");
+            ep = serie + nEpisode + ".mp4";
+        }else if(ita && !subIta){
             nEpisode.append("_ITA");
             ep = serie.substring(0, serie.length() - 3) + nEpisode + ".mp4";
+        }else if(subIta){
+            nEpisode.append("_SUB_ITA");
+            ep = serie.substring(0, serie.length()-6) + nEpisode + ".mp4";
         }else {
             nEpisode.append("_SUB_ITA");
             ep = serie + nEpisode + ".mp4";
@@ -108,22 +115,29 @@ public class EpisodeFinder {
         return num.toString();
     }
 
-    private static void reader(FileInputStream x, ArrayList<String> arr, ArrayList<Integer> nEps) throws IOException{
+    private static void reader(FileInputStream x, ArrayList<String> arr, ArrayList<Integer> nEps, ArrayList<Boolean> absITA) throws IOException{
         StringBuilder str = new StringBuilder(), eps = new StringBuilder();
         int ch;
         char carattere;
-        boolean num = false;
+        boolean num = false, abs = false;
         while((ch = x.read()) != -1){
             carattere = (char) ch;
             if(carattere == '\n'){
                 arr.add(str.toString());
                 nEps.add(Integer.parseInt(eps.toString().trim()));
+                absITA.add(abs);
                 str.delete(0, str.length());
                 eps.delete(0, eps.length());
                 num = false;
+                abs = false;
             }else{
                 if(carattere == ' '){
                     num = true;
+                    continue;
+                }
+
+                if(num && carattere == '@'){
+                    abs = true;
                     continue;
                 }
                 
