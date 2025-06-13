@@ -17,8 +17,16 @@ public class EpisodeFinder {
         ArrayList<Integer> nEpisodes = new ArrayList<>();
         int i = 1, selectedUrl;
         File links = new File(System.getProperty("user.dir")+"\\folders.txt");
+
+        if(!links.exists()){
+            links.createNewFile();
+        }
+
         try (FileInputStream olFolders = new FileInputStream(links)) {
-            reader(olFolders, anime, nEpisodes);
+            if(links.length() == 0){
+                System.out.println("Non sono presenti anime...");
+                System.exit(0);
+            }else reader(olFolders, anime, nEpisodes);
         }
 
         System.out.println("Anime presenti:");
