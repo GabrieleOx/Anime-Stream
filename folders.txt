@@ -1,0 +1,5 @@
+https://srv30.sake.streampeaker.org/DDL/ANIME/OnePieceITA/ 100
+https://srv23.shiro.streampeaker.org/DDL/ANIME/Kuroshitsuji/ 10
+https://srv27.baiku.streampeaker.org/DDL/ANIME/KuroshitsujiMidoriNoMajo-hen/ 10
+https://srv19.sunahama.streampeaker.org/DDL/ANIME/KusuriyaNoHitorigoto/ 10
+https://srv30.sake.streampeaker.org/DDL/ANIME/KusuriyaNoHitorigoto2/ 10

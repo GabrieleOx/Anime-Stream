@@ -1,5 +1,7 @@
 package com.me;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -11,26 +13,26 @@ import org.asynchttpclient.Dsl;
 public class EpisodeFinder {
 
     public static ArrayList<String> getEpisodeList(Scanner scan) throws IOException, ExecutionException, InterruptedException{
-        String [] baseUrl = new String[3];
-        baseUrl[0] = "https://srv30.sake.streampeaker.org/DDL/ANIME/OnePieceITA/";
-        baseUrl[1] = "https://srv27.baiku.streampeaker.org/DDL/ANIME/KuroshitsujiMidoriNoMajo-hen/";
-        baseUrl[2] = "https://srv23.shiro.streampeaker.org/DDL/ANIME/Kuroshitsuji/";
-        ArrayList<String> episodes = new ArrayList<>();
-        int i = 1, selectedUrl, n;
+        ArrayList<String> episodes = new ArrayList<>(), anime = new ArrayList<>();
+        ArrayList<Integer> nEpisodes = new ArrayList<>();
+        int i = 1, selectedUrl;
+        File links = new File(System.getProperty("user.dir")+"\\folders.txt");
+        try (FileInputStream olFolders = new FileInputStream(links)) {
+            reader(olFolders, anime, nEpisodes);
+        }
 
-        System.out.println("Anime presenti:\n1)One piece ITA\n2)Black butler: Strega verde\n3)Black butler");
-        do{
+        System.out.println("Anime presenti:");
+        for(String url : anime)
+            System.out.println(getAnimeName(url) + ':');
+        do
             selectedUrl = scan.nextInt();
-        }while(selectedUrl < 1 || selectedUrl > 3);
-
-        System.out.println("In che ordine di grandezza sono gli episodi (1 -> da 1 a 9; 10 -> da 1 a 99 ecc...)?");
-        n = scan.nextInt();
+        while(selectedUrl < 1 || selectedUrl > anime.size());
 
         scan.nextLine();
 
         selectedUrl--;
         while(true){
-            String name = nameComposer(i, baseUrl[selectedUrl], n);
+            String name = nameComposer(i, anime.get(selectedUrl), nEpisodes.get(selectedUrl));
             if(!isPresent(name))
                 break;
             else {
@@ -38,11 +40,6 @@ public class EpisodeFinder {
             }
             i++;
         }
-        System.out.println("[Episodi presenti:");
-        for(String s : episodes){
-            System.out.println(s + ";");
-        }
-        System.out.println("]");
 
         return episodes;
     }
@@ -71,13 +68,7 @@ public class EpisodeFinder {
         nEpisode.append("_Ep_");
         nEpisode.append(numeroEpisodio(epNumber, totEpisodi));
 
-        int slash = 0, urlLen = baseUrl.length(), j = urlLen;
-        while(slash < 2){
-            j--;
-            if(baseUrl.charAt(j) == '/')
-                slash++;
-        }
-        String serie = baseUrl.substring(j+1, urlLen-1), ep;
+        String serie = getAnimeName(baseUrl), ep;
         boolean ita = serie.substring(serie.length() - 3, serie.length()).equals("ITA");
         
         if(ita){
@@ -107,6 +98,44 @@ public class EpisodeFinder {
             num.append(0);
         num.append(n);
         return num.toString();
+    }
+
+    private static void reader(FileInputStream x, ArrayList<String> arr, ArrayList<Integer> nEps) throws IOException{
+        StringBuilder str = new StringBuilder(), eps = new StringBuilder();
+        int ch;
+        char carattere;
+        boolean num = false;
+        while((ch = x.read()) != -1){
+            carattere = (char) ch;
+            if(carattere == '\n'){
+                arr.add(str.toString());
+                nEps.add(Integer.parseInt(eps.toString().trim()));
+                str.delete(0, str.length());
+                eps.delete(0, eps.length());
+                num = false;
+            }else{
+                if(carattere == ' '){
+                    num = true;
+                    continue;
+                }
+                
+                if(num)
+                    eps.append(carattere);
+                else str.append(carattere);
+            }
+        }
+        arr.add(str.toString());
+        nEps.add(Integer.parseInt(eps.toString().trim()));
+    }
+
+    private static String getAnimeName(String url){
+        int slash = 0, urlLen = url.length(), j = urlLen;
+        while(slash < 2){
+            j--;
+            if(url.charAt(j) == '/')
+                slash++;
+        }
+        return url.substring(j+1, urlLen-1);
     }
 }
 
