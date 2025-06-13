@@ -124,7 +124,7 @@ public class EpisodeFinder {
             carattere = (char) ch;
             if(carattere == '\n'){
                 arr.add(str.toString());
-                nEps.add(Integer.parseInt(eps.toString().trim()));
+                nEps.add(Integer.valueOf(eps.toString().trim()));
                 absITA.add(abs);
                 str.delete(0, str.length());
                 eps.delete(0, eps.length());
@@ -147,7 +147,7 @@ public class EpisodeFinder {
             }
         }
         arr.add(str.toString());
-        nEps.add(Integer.parseInt(eps.toString().trim()));
+        nEps.add(Integer.valueOf(eps.toString().trim()));
     }
 
     private static String getAnimeName(String url){
