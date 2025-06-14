@@ -51,17 +51,16 @@ public class Download {
                 if (contentLength != null) {
                     totalBytes = Long.parseLong(contentLength);
                 }
-                //System.out.println("\nDownload completato.");
                 Main.downloadThredStop.set(indiceStop, true);
                 opStream.close();
                 downloadComplete.complete(null);
-                System.exit(0);
                 return null;
             }
 
             @Override
             public void onThrowable(Throwable t) {
                 System.err.println("\nErrore durante il download: " + t.getMessage());
+                Main.downloadThredStop.set(indiceStop, true);
                 try {
                     opStream.close();
                 } catch (IOException ignored) {}
@@ -69,14 +68,13 @@ public class Download {
             }
         });
 
-        // Qui attendi il completamento e poi chiudi il client in modo sicuro
-        /*try {
-            downloadComplete.join(); // blocca il thread principale finché non finisce
+        try {
+            while(!Main.downloadThredStop.get(indiceStop));
         } finally {
             client.close(); // CHIUSURA SICURA
         }
 
-        System.out.println("Risorse chiuse correttamente.");*/
+        System.out.println("Risorse chiuse correttamente.");
     }
 
     private static File getFile(String url, String path){

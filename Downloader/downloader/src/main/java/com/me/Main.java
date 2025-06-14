@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 
 
@@ -11,54 +12,71 @@ public class Main {
     public static volatile ArrayList<Boolean> downloadThredStop = new ArrayList<>();
     public static void main(String[] args) throws Exception {
         Scanner scan = new Scanner(System.in);
-        ArrayList<String> anime = new ArrayList<>(), episodi;
+        ArrayList<Thread> downloadThreads = new ArrayList<>(), stopThreads = new ArrayList<>();
+        ArrayList<String> anime = new ArrayList<>(), episodi = null;
         ArrayList<Integer> nEpisodes = new ArrayList<>();
         ArrayList<Boolean> abslouteITA = new ArrayList<>();
-        int nEp, scelto;
+        int scelto, oldScelto = -1;
         char c;
-        String s;
+        String os = System.getProperty("os.name");
 
-        if(System.getProperty("os.name").equals("Windows"))
+        if(os.contains("Windows"))
             c = '\\';
         else c = '/';
-
         final char slash = c;
 
         AnimeFinder.getAnime(slash, anime, nEpisodes, abslouteITA);
-
-        System.out.println("Scegli un anime tra i presenti:");
-        for(int i = 0; i < anime.size(); i++)
-            System.out.println((i+1) + ") " + EpisodeFinder.getAnimeName(anime.get(i)) + ':');
-
-        do
-            scelto = scan.nextInt();
-        while(scelto < 1 || scelto > anime.size());
-        scelto--;
-
-        episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto));
-
-        nEp = episodeChooser(scan, episodi);
 
         File cartella = new File(System.getProperty("user.dir") + slash + "ANIME" + slash);
             if(!cartella.exists())
                 cartella.mkdir();
 
-        downloadThredStop.add(false);
-        Thread t = new Thread(() ->{
-            int iStop = downloadThredStop.size()-1;
-            Download d = new Download(episodi.get(nEp-1), cartella.getAbsolutePath() + slash);
-            try {
-                d.scarica(iStop);
-                while(!downloadThredStop.get(iStop));
-                System.out.println("Download finito.");
-            } catch (IOException e) {}
-        });
-        t.start();
+        do {
 
-        scan.nextLine();
-        System.out.println("Inserisci una stringa:");
-        String str = scan.nextLine();
-        System.out.println("Hai inserito: " + str);
+            if(os.contains("Windows"))
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            else Runtime.getRuntime().exec("clear");
+
+            System.out.println("Scegli un anime tra i presenti:");
+            for(int i = 0; i < anime.size(); i++)
+                System.out.println((i+1) + ") " + EpisodeFinder.getAnimeName(anime.get(i)) + ':');
+
+            do
+                scelto = scan.nextInt();
+            while(scelto < 1 || scelto > anime.size());
+            scelto--;
+
+            if(scelto != oldScelto)
+                episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto));
+
+            addDownload(downloadThreads, stopThreads, episodi, cartella, episodeChooser(scan, episodi), slash);
+            oldScelto = scelto;
+
+            System.out.println("Inserisci 1 per iniziare altri download\noppure altro per uscire:");
+        } while (scan.nextInt() == 1);
+
+        int downloadInCorso = 0, downloadTrovati;
+        for(int i = 0; i < downloadThredStop.size(); i++)
+            if(!downloadThredStop.get(i))
+                downloadInCorso++;
+            
+        if(downloadInCorso > 0){
+            System.out.println("Ci sono ancora " + downloadInCorso + " download in corso:\nAppena finiranno vedrai un messaggio relativo:");
+            downloadTrovati = downloadInCorso;
+            while(downloadTrovati > 0){
+                downloadTrovati = 0;
+                for(int i = 0; i < downloadThredStop.size(); i++)
+                    if(!downloadThredStop.get(i))
+                        downloadTrovati++;
+                System.out.print("\rDownload in corso.  ");
+                TimeUnit.MILLISECONDS.sleep(500);
+                System.out.print("\rDownload in corso.. ");
+                TimeUnit.MILLISECONDS.sleep(500);
+                System.out.print("\rDownload in corso...");
+                TimeUnit.MILLISECONDS.sleep(500);
+            }
+            System.out.println("\nTutti i download sono stati completati.\n");
+        }
     }
 
     private static int episodeChooser(Scanner scan, ArrayList<String> episodes){
@@ -96,6 +114,7 @@ public class Main {
         if(goOn && ultimoGiro)
             System.exit(0);
 
+        scan.nextLine();
         return selected;
     }
 
@@ -104,5 +123,23 @@ public class Main {
         while(episodeUrl.charAt(j-1) != '/')
             j--;
         return episodeUrl.substring(j, episodeUrl.length() - 4);
+    }
+
+    private static void addDownload(ArrayList<Thread> start, ArrayList<Thread> stop, ArrayList<String> episodi, File cartella, int nEp, char slash){
+        downloadThredStop.add(false);
+        start.add(new Thread(() ->{
+            final int iStop = downloadThredStop.size()-1;
+            Download d = new Download(episodi.get(nEp-1), cartella.getAbsolutePath() + slash);
+            try {
+                d.scarica(iStop);
+            } catch (IOException e) {}
+        }));
+        start.get(downloadThredStop.size()-1).start();
+        stop.add(new Thread(() -> {
+            final int iS = downloadThredStop.size()-1;
+            while(!downloadThredStop.get(iS));
+            start.get(iS).interrupt();
+        }));
+        stop.get(downloadThredStop.size()-1).start();
     }
 }
