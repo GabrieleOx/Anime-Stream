@@ -1,13 +1,16 @@
 package com.me;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 
 
 public class Main {
+    public static volatile ArrayList<Boolean> downloadThredStop = new ArrayList<>();
     public static void main(String[] args) throws Exception {
+        Scanner scan = new Scanner(System.in);
         ArrayList<String> anime = new ArrayList<>(), episodi;
         ArrayList<Integer> nEpisodes = new ArrayList<>();
         ArrayList<Boolean> abslouteITA = new ArrayList<>();
@@ -27,23 +30,35 @@ public class Main {
         for(int i = 0; i < anime.size(); i++)
             System.out.println((i+1) + ") " + EpisodeFinder.getAnimeName(anime.get(i)) + ':');
 
-        try (Scanner scan = new Scanner(System.in)) {
+        do
+            scelto = scan.nextInt();
+        while(scelto < 1 || scelto > anime.size());
+        scelto--;
 
-            do
-                scelto = scan.nextInt();
-            while(scelto < 1 || scelto > anime.size());
-            scelto--;
+        episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto));
 
-            episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto));
-
-            nEp = episodeChooser(scan, episodi);
-        }
+        nEp = episodeChooser(scan, episodi);
 
         File cartella = new File(System.getProperty("user.dir") + slash + "ANIME" + slash);
             if(!cartella.exists())
                 cartella.mkdir();
 
-        Download.videoDownloader(episodi.get(nEp-1), cartella.getAbsolutePath() + slash);
+        downloadThredStop.add(false);
+        Thread t = new Thread(() ->{
+            int iStop = downloadThredStop.size()-1;
+            Download d = new Download(episodi.get(nEp-1), cartella.getAbsolutePath() + slash);
+            try {
+                d.scarica(iStop);
+                while(!downloadThredStop.get(iStop));
+                System.out.println("Download finito.");
+            } catch (IOException e) {}
+        });
+        t.start();
+
+        scan.nextLine();
+        System.out.println("Inserisci una stringa:");
+        String str = scan.nextLine();
+        System.out.println("Hai inserito: " + str);
     }
 
     private static int episodeChooser(Scanner scan, ArrayList<String> episodes){
@@ -65,7 +80,9 @@ public class Main {
                 System.out.println(getSingleEp(x));
                 indice++;
             }
-            System.out.println("Se l'episodio ricercato è tra quelli mostrati inserire il numero di quello richiesto altrimenti un numero esterno:");
+            if(!ultimoGiro)
+                System.out.println("Se l'episodio ricercato è tra quelli mostrati inserire il numero di quello richiesto altrimenti un numero esterno:");
+            else System.out.println("Inserire il numeor dell'episodio da scaricare, uno esterno per uscire:");
             selected = scan.nextInt();
 
             if(selected < start+1 || selected > end){

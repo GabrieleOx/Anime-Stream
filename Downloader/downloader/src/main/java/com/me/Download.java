@@ -14,8 +14,14 @@ import org.asynchttpclient.HttpResponseBodyPart;
 import org.asynchttpclient.Response;
 
 public class Download {
+    private final String fileUrl, filePath;
+
+    public Download(String fileUrl, String filePath){
+        this.fileUrl = fileUrl;
+        this.filePath = filePath;
+    }
     
-    public static void videoDownloader(String fileUrl, String filePath) throws IOException{
+    public void scarica(int indiceStop) throws IOException{
         AsyncHttpClientConfig config = Dsl.config()
             .setConnectTimeout(30_000)
             .setReadTimeout(120_000)
@@ -24,18 +30,18 @@ public class Download {
 
         AsyncHttpClient client = Dsl.asyncHttpClient(config);
 
-        FileOutputStream opStream = new FileOutputStream(getFile(fileUrl, filePath));
+        FileOutputStream opStream = new FileOutputStream(getFile(this.fileUrl, this.filePath));
         AtomicLong downloadedBytes = new AtomicLong(0);
         CompletableFuture<Void> downloadComplete = new CompletableFuture<>();
 
-        client.prepareGet(fileUrl).execute(new AsyncCompletionHandler<Void>() {
+        client.prepareGet(this.fileUrl).execute(new AsyncCompletionHandler<Void>() {
             long totalBytes = -1;
 
             @Override
             public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
                 opStream.getChannel().write(bodyPart.getBodyByteBuffer());
                 long current = downloadedBytes.addAndGet(bodyPart.length());
-                System.out.print("\rScaricati: " + current + " bytes");
+                //System.out.print("\rScaricati: " + current + " bytes");
                 return State.CONTINUE;
             }
 
@@ -45,9 +51,11 @@ public class Download {
                 if (contentLength != null) {
                     totalBytes = Long.parseLong(contentLength);
                 }
-                System.out.println("\nDownload completato.");
+                //System.out.println("\nDownload completato.");
+                Main.downloadThredStop.set(indiceStop, true);
                 opStream.close();
                 downloadComplete.complete(null);
+                System.exit(0);
                 return null;
             }
 
@@ -62,13 +70,13 @@ public class Download {
         });
 
         // Qui attendi il completamento e poi chiudi il client in modo sicuro
-        try {
+        /*try {
             downloadComplete.join(); // blocca il thread principale finché non finisce
         } finally {
             client.close(); // CHIUSURA SICURA
         }
 
-        System.out.println("Risorse chiuse correttamente.");
+        System.out.println("Risorse chiuse correttamente.");*/
     }
 
     private static File getFile(String url, String path){

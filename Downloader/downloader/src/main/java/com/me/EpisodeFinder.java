@@ -67,7 +67,6 @@ public class EpisodeFinder {
             ep = serie + nEpisode + ".mp4";
         }
 
-        System.out.println(baseUrl + ep);
         return baseUrl + ep;
     }
 
