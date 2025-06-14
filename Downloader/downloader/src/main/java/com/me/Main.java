@@ -36,15 +36,7 @@ public class Main {
 
             episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto));
 
-            System.out.println("Episodi disponibili:");
-            for(String str : episodi)
-                System.out.println(getSingleEp(str));
-            
-            System.out.println("Scegli un episodio:");
-            do{
-                nEp = scan.nextInt();
-            }while(nEp < 1 || nEp > episodi.size());
-            scan.nextLine();
+            nEp = episodeChooser(scan, episodi);
         }
 
         File cartella = new File(System.getProperty("user.dir") + slash + "ANIME" + slash);
@@ -52,6 +44,42 @@ public class Main {
                 cartella.mkdir();
 
         Download.videoDownloader(episodi.get(nEp-1), cartella.getAbsolutePath() + slash);
+    }
+
+    private static int episodeChooser(Scanner scan, ArrayList<String> episodes){
+        boolean ultimoGiro = false, goOn = false;
+        int start = 0, end = 50, indice, max = episodes.size(), selected;
+
+        do {
+            if(max <= end){
+                end = max;
+                ultimoGiro = true;
+                System.out.println("Vengono mostrati gli ultimi episodi disponibili:");
+            }
+
+            System.out.println("\"Episodi da " + (start+1) + " a " + end + ':');
+            indice = start;
+            String x;
+            while(indice < end){
+                x = episodes.get(indice);
+                System.out.println(getSingleEp(x));
+                indice++;
+            }
+            System.out.println("Se l'episodio ricercato è tra quelli mostrati inserire il numero di quello richiesto altrimenti un numero esterno:");
+            selected = scan.nextInt();
+
+            if(selected < start+1 || selected > end){
+                start = end;
+                end += 50;
+                goOn = true;
+            }else goOn = false;
+            
+        } while (goOn && !ultimoGiro);
+
+        if(goOn && ultimoGiro)
+            System.exit(0);
+
+        return selected;
     }
 
     private static String getSingleEp(String episodeUrl){
