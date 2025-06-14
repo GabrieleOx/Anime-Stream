@@ -55,6 +55,7 @@ public class AnimeFinder {
         }
         arr.add(str.toString());
         nEps.add(Integer.valueOf(eps.toString().trim()));
+        absITA.add(abs);
     }
     
 }

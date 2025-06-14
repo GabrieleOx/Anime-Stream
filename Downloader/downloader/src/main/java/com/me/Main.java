@@ -27,9 +27,9 @@ public class Main {
 
         AnimeFinder.getAnime(slash, anime, nEpisodes, abslouteITA);
 
-        File cartella = new File(System.getProperty("user.dir") + slash + "ANIME" + slash);
-            if(!cartella.exists())
-                cartella.mkdir();
+        File cartella = new File(System.getProperty("user.dir") + slash + "ANIME" + slash), specific = null;
+        if(!cartella.exists())
+            cartella.mkdir();
 
         do {
 
@@ -46,10 +46,14 @@ public class Main {
             while(scelto < 1 || scelto > anime.size());
             scelto--;
 
-            if(scelto != oldScelto)
+            if(scelto != oldScelto){
                 episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto));
+                specific = new File(cartella.getAbsolutePath() + slash + EpisodeFinder.getAnimeName(anime.get(scelto)) + slash);
+                if(!specific.exists())
+                    specific.mkdir();
+            }
 
-            addDownload(downloadThreads, stopThreads, episodi, cartella, episodeChooser(scan, episodi), slash);
+            addDownload(downloadThreads, stopThreads, episodi, specific, episodeChooser(scan, episodi), slash);
             oldScelto = scelto;
 
             System.out.println("Inserisci 1 per iniziare altri download\noppure altro per uscire:");
