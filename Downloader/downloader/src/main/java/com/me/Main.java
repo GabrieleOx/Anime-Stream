@@ -35,7 +35,6 @@ public class Main {
 
             if(os.contains("Windows"))
                 new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
-            else Runtime.getRuntime().exec("clear");
 
             System.out.println("Scegli un anime tra i presenti:");
             for(int i = 0; i < anime.size(); i++)

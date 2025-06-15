@@ -6,3 +6,4 @@ https://srv30.sake.streampeaker.org/DDL/ANIME/KusuriyaNoHitorigoto2/ 10
 https://srv26-mars.sweetpixel.org/DDL/ANIME/OnePieceSUBITA/ 1000
 https://srv29.sushi.streampeaker.org/DDL/ANIME/BlackLagoon/ 10 @
 https://srv28.panya.streampeaker.org/DDL/ANIME/BlackLagoonRobertasBloodTrail/ 10 @
+https://srv29.sushi.streampeaker.org/DDL/ANIME/DarlingInTheFranXX/ 10
