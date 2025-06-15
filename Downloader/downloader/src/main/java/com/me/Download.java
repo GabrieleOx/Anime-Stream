@@ -51,7 +51,7 @@ public class Download {
                 if (contentLength != null) {
                     totalBytes = Long.parseLong(contentLength);
                 }
-                Main.downloadThredStop.set(indiceStop, true);
+                AnimeDownloader.downloadThredStop.set(indiceStop, true);
                 opStream.close();
                 downloadComplete.complete(null);
                 return null;
@@ -60,7 +60,7 @@ public class Download {
             @Override
             public void onThrowable(Throwable t) {
                 System.err.println("\nErrore durante il download: " + t.getMessage());
-                Main.downloadThredStop.set(indiceStop, true);
+                AnimeDownloader.downloadThredStop.set(indiceStop, true);
                 try {
                     opStream.close();
                 } catch (IOException ignored) {}
@@ -69,7 +69,7 @@ public class Download {
         });
 
         try {
-            while(!Main.downloadThredStop.get(indiceStop));
+            while(!AnimeDownloader.downloadThredStop.get(indiceStop));
         } finally {
             client.close(); // CHIUSURA SICURA
         }
