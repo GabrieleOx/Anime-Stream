@@ -1,11 +1,14 @@
 package com.me;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
@@ -21,6 +24,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        ArrayList<Thread> downloadThreads = new ArrayList<>(), stopThreads = new ArrayList<>();
 
         char c;
         String os = System.getProperty("os.name");
@@ -37,7 +41,7 @@ public class Main extends Application {
         Image icon = new Image(getClass().getResource("/icona.png").toString());
 
         Controller controller = loader.getController();
-        controller.loadAnimeList(slash);
+        controller.loadAnimeList(slash, downloadThreads, stopThreads);
 
         stage.getIcons().add(icon);
         stage.setTitle("Anime Downloader");
@@ -46,6 +50,35 @@ public class Main extends Application {
         stage.setFullScreenExitHint("");
         stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
         stage.setScene(scene);
+        stage.setOnCloseRequest(e -> {
+            int downloadInCorso = 0, downloadTrovati;
+            for(int i = 0; i < AnimeDownloader.downloadThredStop.size(); i++)
+                if(!AnimeDownloader.downloadThredStop.get(i))
+                    downloadInCorso++;
+                
+            if(downloadInCorso > 0){
+                String str = "Ci sono ancora " + downloadInCorso + " download in corso:\nVuoi che l'app si riduca ad icona e termini i download in\nautonomia per poi chiudersi?";
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, str, ButtonType.YES, ButtonType.NO);
+                alert.setHeaderText(null);
+                alert.setTitle("Conferma uscita");
+
+                ButtonType result = alert.showAndWait().orElse(ButtonType.NO);
+
+                if (result != ButtonType.YES) {
+                    stage.setIconified(true);
+                    downloadTrovati = downloadInCorso;
+                    while(downloadTrovati > 0){
+                        downloadTrovati = 0;
+                        for(int i = 0; i < AnimeDownloader.downloadThredStop.size(); i++)
+                            if(!AnimeDownloader.downloadThredStop.get(i))
+                                downloadTrovati++;
+                    }
+                    System.exit(0);
+                } else {
+                    System.exit(0);
+                }
+            }
+        });
 
         stage.show();
     }

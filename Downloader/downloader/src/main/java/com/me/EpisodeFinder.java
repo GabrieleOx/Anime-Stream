@@ -3,7 +3,6 @@ package com.me;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.Dsl;
@@ -21,13 +20,7 @@ public class EpisodeFinder {
             else {
                 episodes.add(name);
             }
-            i++;
-            System.out.print("\rRicerca episodi in corso.  ");
-            TimeUnit.MILLISECONDS.sleep(500);
-            System.out.print("\rRicerca episodi in corso.. ");
-            TimeUnit.MILLISECONDS.sleep(500);
-            System.out.print("\rRicerca episodi in corso...");
-            TimeUnit.MILLISECONDS.sleep(500);    
+            i++;    
         }
 
         return episodes;

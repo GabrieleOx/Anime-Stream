@@ -4,15 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 
 
 public class AnimeDownloader {
     public static volatile ArrayList<Boolean> downloadThredStop = new ArrayList<>();
-    public static void main(String[] args) throws Exception {
+    /*public static void main(String[] args) throws Exception {
         Scanner scan = new Scanner(System.in);
-        ArrayList<Thread> downloadThreads = new ArrayList<>(), stopThreads = new ArrayList<>();
         ArrayList<String> anime = new ArrayList<>(), episodi = null;
         ArrayList<Integer> nEpisodes = new ArrayList<>();
         ArrayList<Boolean> abslouteITA = new ArrayList<>();
@@ -80,7 +78,7 @@ public class AnimeDownloader {
             }
             System.out.println("\nTutti i download sono stati completati.\n");
         }
-    }
+    }*/
 
     private static int episodeChooser(Scanner scan, ArrayList<String> episodes){
         boolean ultimoGiro = false, goOn = false;
@@ -121,14 +119,14 @@ public class AnimeDownloader {
         return selected;
     }
 
-    private static String getSingleEp(String episodeUrl){
+    public static String getSingleEp(String episodeUrl){
         int j = episodeUrl.length()-4;
         while(episodeUrl.charAt(j-1) != '/')
             j--;
         return episodeUrl.substring(j, episodeUrl.length() - 4);
     }
 
-    private static void addDownload(ArrayList<Thread> start, ArrayList<Thread> stop, ArrayList<String> episodi, File cartella, int nEp, char slash){
+    public static void addDownload(ArrayList<Thread> start, ArrayList<Thread> stop, ArrayList<String> episodi, File cartella, int nEp, char slash){
         downloadThredStop.add(false);
         start.add(new Thread(() ->{
             final int iStop = downloadThredStop.size()-1;
