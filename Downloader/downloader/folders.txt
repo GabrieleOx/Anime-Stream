@@ -1,0 +1,9 @@
+https://srv30.sake.streampeaker.org/DDL/ANIME/OnePieceITA/ 100
+https://srv23.shiro.streampeaker.org/DDL/ANIME/Kuroshitsuji/ 10
+https://srv27.baiku.streampeaker.org/DDL/ANIME/KuroshitsujiMidoriNoMajo-hen/ 10
+https://srv19.sunahama.streampeaker.org/DDL/ANIME/KusuriyaNoHitorigoto/ 10
+https://srv30.sake.streampeaker.org/DDL/ANIME/KusuriyaNoHitorigoto2/ 10
+https://srv26-mars.sweetpixel.org/DDL/ANIME/OnePieceSUBITA/ 1000
+https://srv29.sushi.streampeaker.org/DDL/ANIME/BlackLagoon/ 10 @
+https://srv28.panya.streampeaker.org/DDL/ANIME/BlackLagoonRobertasBloodTrail/ 10 @
+https://srv29.sushi.streampeaker.org/DDL/ANIME/DarlingInTheFranXX/ 10
