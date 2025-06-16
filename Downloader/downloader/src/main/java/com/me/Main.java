@@ -64,7 +64,8 @@ public class Main extends Application {
 
                 ButtonType result = alert.showAndWait().orElse(ButtonType.NO);
 
-                if (result != ButtonType.YES) {
+                if (result == ButtonType.YES) {
+                    e.consume();
                     stage.setIconified(true);
                     downloadTrovati = downloadInCorso;
                     while(downloadTrovati > 0){

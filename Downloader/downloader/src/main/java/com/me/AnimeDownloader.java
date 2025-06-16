@@ -3,7 +3,6 @@ package com.me;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 
 
@@ -78,7 +77,7 @@ public class AnimeDownloader {
             }
             System.out.println("\nTutti i download sono stati completati.\n");
         }
-    }*/
+    }
 
     private static int episodeChooser(Scanner scan, ArrayList<String> episodes){
         boolean ultimoGiro = false, goOn = false;
@@ -117,7 +116,7 @@ public class AnimeDownloader {
 
         scan.nextLine();
         return selected;
-    }
+    }*/
 
     public static String getSingleEp(String episodeUrl){
         int j = episodeUrl.length()-4;

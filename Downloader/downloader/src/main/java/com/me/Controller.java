@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -24,13 +25,28 @@ public class Controller {
 
     @FXML
     private ScrollPane scrollEpisodi, scrollAnime;
-    private TreeView<File> alberoCartella;
+    @FXML
+    private TreeView<String> alberoCartella;
 
     public void loadEpisodeList(char slash, int selected, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException, ExecutionException, InterruptedException{
+
+        File cartella = new File(System.getProperty("user.dir") + slash + "ANIME" + slash);
+        if(!cartella.exists())
+            cartella.mkdir();
+        File specific = new File(cartella.getAbsolutePath() + slash + EpisodeFinder.getAnimeName(anime.get(selected)) + slash);
+        if(!specific.exists())
+            specific.mkdir();
+
+        TreeItem<String> root = new TreeItem<>(EpisodeFinder.getAnimeName(anime.get(selected)), new ImageView(new Image("/folder.png")));
+        for(String f : specific.list())
+            root.getChildren().add(new TreeItem<>(f));
+
+        alberoCartella.setRoot(root);
         Image i = new Image("/icona.png");
         ImageView loading = new ImageView(i);
         scrollEpisodi.setContent(loading);
-        scrollEpisodi.setContent(getEpisodesToPalce(slash, selected, downloadThreads, stopThreads));
+        FlowPane f = getEpisodesToPalce(slash, selected, downloadThreads, stopThreads, specific);
+        scrollEpisodi.setContent(f);
     }
 
     public void loadAnimeList(char slash, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException{
@@ -59,20 +75,14 @@ public class Controller {
         scrollAnime.setContent(flussoAnime);
     }
 
-    private static FlowPane getEpisodesToPalce(char slash, int scelto, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException, ExecutionException, InterruptedException{
+    private static FlowPane getEpisodesToPalce(char slash, int scelto, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads, File specific) throws IOException, ExecutionException, InterruptedException{
         episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto));
         FlowPane flussoEpisodi = new FlowPane(Orientation.VERTICAL);
         
         flussoEpisodi.setPrefWidth(330);
-        flussoEpisodi.setPrefHeight(22 * (anime.size() * 2));
+        flussoEpisodi.setPrefHeight(50 * (anime.size()));
         flussoEpisodi.setVgap(10);
-
-        File cartella = new File(System.getProperty("user.dir") + slash + "ANIME" + slash);
-        if(!cartella.exists())
-            cartella.mkdir();
-        final File specific = new File(cartella.getAbsolutePath() + slash + EpisodeFinder.getAnimeName(anime.get(scelto)) + slash);
-        if(!specific.exists())
-            specific.mkdir();
+        flussoEpisodi.setHgap(10);
 
         for(int i = 0; i < episodi.size(); i++){
             Button b = new Button(AnimeDownloader.getSingleEp(episodi.get(i)));
