@@ -20,7 +20,7 @@ import javafx.scene.text.Font;
 
 public class Controller {
     public static ArrayList<String> anime = new ArrayList<>(), episodi = null;
-    public static ArrayList<Integer> nEpisodes = new ArrayList<>();
+    public static ArrayList<Integer> nEpisodes = new ArrayList<>(), startVals = new ArrayList<>();
     public static ArrayList<Boolean> abslouteITA = new ArrayList<>();
 
     @FXML
@@ -50,7 +50,7 @@ public class Controller {
     }
 
     public void loadAnimeList(char slash, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException{
-        AnimeFinder.getAnime(slash, anime, nEpisodes, abslouteITA);
+        AnimeFinder.getAnime(slash, anime, nEpisodes, abslouteITA, startVals);
         FlowPane flussoAnime = new FlowPane(Orientation.VERTICAL);
         ToggleGroup animeGroup = new ToggleGroup();
 
@@ -76,7 +76,7 @@ public class Controller {
     }
 
     private static FlowPane getEpisodesToPalce(char slash, int scelto, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads, File specific) throws IOException, ExecutionException, InterruptedException{
-        episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto));
+        episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto), startVals.get(scelto));
         FlowPane flussoEpisodi = new FlowPane(Orientation.VERTICAL);
         
         flussoEpisodi.setPrefWidth(330);

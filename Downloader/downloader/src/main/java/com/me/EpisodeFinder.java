@@ -9,8 +9,8 @@ import org.asynchttpclient.Dsl;
 
 public class EpisodeFinder {
 
-    public static ArrayList<String> getEpisodeList(char slash, int selectedUrl, String animeScelto, int indiceEpisodi, boolean itaAssoluto) throws IOException, ExecutionException, InterruptedException{
-        int i = 1;
+    public static ArrayList<String> getEpisodeList(char slash, int selectedUrl, String animeScelto, int indiceEpisodi, boolean itaAssoluto, int start) throws IOException, ExecutionException, InterruptedException{
+        int i = start;
         ArrayList<String> episodes = new ArrayList<>();
 
         while(true){
