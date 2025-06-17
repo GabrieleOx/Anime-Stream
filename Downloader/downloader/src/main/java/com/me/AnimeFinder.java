@@ -71,6 +71,12 @@ public class AnimeFinder {
         arr.add(str.toString());
         nEps.add(Integer.valueOf(eps.toString().trim()));
         absITA.add(abs);
+
+        if(starterStr.toString().trim().length() > 0){
+            if(Integer.parseInt(starterStr.toString().trim()) > 0)
+                starters.add(Integer.valueOf(starterStr.toString().trim()));
+            starters.add(1);
+        }else starters.add(1);
     }
     
 }

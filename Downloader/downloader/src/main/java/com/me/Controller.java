@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Button;
@@ -24,7 +25,7 @@ public class Controller {
     public static ArrayList<Boolean> abslouteITA = new ArrayList<>();
 
     @FXML
-    private ScrollPane scrollEpisodi, scrollAnime;
+    private volatile ScrollPane scrollEpisodi, scrollAnime;
     @FXML
     private TreeView<String> alberoCartella;
 
@@ -42,11 +43,31 @@ public class Controller {
             root.getChildren().add(new TreeItem<>(f));
 
         alberoCartella.setRoot(root);
-        Image i = new Image("/icona.png");
-        ImageView loading = new ImageView(i);
+         
+        ImageView loading = new ImageView(new Image("/loading.gif"));
+        loading.setFitWidth(scrollEpisodi.getWidth());
+        loading.setPreserveRatio(true);
         scrollEpisodi.setContent(loading);
-        FlowPane f = getEpisodesToPalce(slash, selected, downloadThreads, stopThreads, specific);
-        scrollEpisodi.setContent(f);
+        
+        new Thread(() -> {
+            FlowPane f;
+            try {
+                f = getEpisodesToPalce(slash, selected, downloadThreads, stopThreads, specific);
+                Platform.runLater(() -> {
+                    scrollEpisodi.setContent(f);
+                });
+            } catch (IOException | ExecutionException | InterruptedException e) {
+                Image im = new Image("/fail.png");
+                ImageView failedToLoad = new ImageView(im);
+
+                failedToLoad.setFitWidth(scrollEpisodi.getWidth() - 2);
+                failedToLoad.setFitHeight(scrollEpisodi.getHeight() - 2);
+                
+                Platform.runLater(() -> {
+                    scrollEpisodi.setContent(failedToLoad);
+                });
+            } 
+        }).start();
     }
 
     public void loadAnimeList(char slash, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException{
