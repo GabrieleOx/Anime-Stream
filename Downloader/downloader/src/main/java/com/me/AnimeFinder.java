@@ -4,11 +4,23 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class AnimeFinder {
 
     public static void getAnime(char slash, ArrayList<String> anime, ArrayList<Integer> nEpisodes, ArrayList<Boolean> abslouteITA, ArrayList<Integer> startValues) throws IOException{
-        File links = new File(System.getProperty("user.dir")+slash+"folders.txt");
+        
+        String docs;
+
+        Locale questo = Locale.getDefault();
+        if(questo.getLanguage().equals("it"))
+            docs = "Documenti";
+        else docs = "Documents";
+
+        File cartella = new File(System.getProperty("user.home") + slash + docs + slash + "AnimeDownloader" + slash);
+        if(!cartella.exists())
+            cartella.mkdir();
+        File links = new File(cartella.getAbsolutePath() + slash + "folders.txt");
 
         if(!links.exists()){
             links.createNewFile();

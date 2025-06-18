@@ -84,7 +84,7 @@ public class Main extends Application {
                 } else {
                     System.exit(0);
                 }
-            }
+            } else System.exit(0);
         });
 
         stage.show();

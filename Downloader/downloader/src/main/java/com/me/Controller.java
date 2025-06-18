@@ -3,6 +3,7 @@ package com.me;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -43,7 +44,14 @@ public class Controller {
 
     public void loadEpisodeList(char slash, int selected, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException, ExecutionException, InterruptedException{
 
-        File cartella = new File(System.getProperty("user.dir") + slash + "ANIME" + slash);
+        String docs;
+
+        Locale questo = Locale.getDefault();
+        if(questo.getLanguage().equals("it"))
+            docs = "Documenti";
+        else docs = "Documents";
+
+        File cartella = new File(System.getProperty("user.home") + slash + docs + slash + "AnimeDownloader" + slash + "ANIME" + slash);
         if(!cartella.exists())
             cartella.mkdir();
         File specific = new File(cartella.getAbsolutePath() + slash + EpisodeFinder.getAnimeName(anime.get(selected)) + slash);
@@ -76,7 +84,6 @@ public class Controller {
             if(epScelto > 0 && epScelto < nEpisodes.get(selected)*10)
                 if(epScelto-50 > 0)
                     starter[0] = epScelto-50;
-                else starter[0] = 1;
         });
 
         startVals.set(selected, starter[0]);
