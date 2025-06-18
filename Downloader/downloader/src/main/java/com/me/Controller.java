@@ -76,7 +76,7 @@ public class Controller {
             if(epScelto > 0 && epScelto < nEpisodes.get(selected)*10)
                 if(epScelto-50 > 0)
                     starter[0] = epScelto-50;
-                else starter[0] = 0;
+                else starter[0] = 1;
         });
 
         startVals.set(selected, starter[0]);
