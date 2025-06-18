@@ -25,6 +25,7 @@ public class Controller {
     public static ArrayList<String> anime = new ArrayList<>(), episodi = null;
     public static ArrayList<Integer> nEpisodes = new ArrayList<>(), startVals = new ArrayList<>();
     public static ArrayList<Boolean> abslouteITA = new ArrayList<>();
+    private static Thread findEpisodes = new Thread();
 
     @FXML
     private volatile ScrollPane scrollEpisodi, scrollAnime;
@@ -54,6 +55,11 @@ public class Controller {
         int [] starter = {startVals.get(selected)};
 
         TextInputDialog episodioRicercato = new TextInputDialog("0");
+        ImageView alert = new ImageView(new Image("/alert.png"));
+        alert.setFitWidth(120);
+        alert.setPreserveRatio(true);
+        episodioRicercato.setGraphic(alert);
+        episodioRicercato.setResizable(false);
         episodioRicercato.setTitle("Scelta Episodio");
         episodioRicercato.setHeaderText("Inserisci il numero dell'episodio che stai cercando\nper caricare solo quelli vicini oppure 0 per\nusare l'automatico");
         episodioRicercato.setContentText("Numero episodio:");
@@ -69,8 +75,11 @@ public class Controller {
         });
 
         startVals.set(selected, starter[0]);
+
+        if(findEpisodes.isAlive())
+            findEpisodes.interrupt();
         
-        new Thread(() -> {
+        findEpisodes = new Thread(() -> {
             FlowPane f;
             try {
                 f = getEpisodesToPalce(slash, selected, downloadThreads, stopThreads, specific);
@@ -88,7 +97,8 @@ public class Controller {
                     scrollEpisodi.setContent(failedToLoad);
                 });
             } 
-        }).start();
+        });
+        findEpisodes.start();
     }
 
     public void loadAnimeList(char slash, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException{

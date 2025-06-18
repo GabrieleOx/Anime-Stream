@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 
@@ -59,6 +60,11 @@ public class Main extends Application {
             if(downloadInCorso > 0){
                 String str = "Ci sono ancora " + downloadInCorso + " download in corso:\nVuoi che l'app si riduca ad icona e termini i download in\nautonomia per poi chiudersi?";
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION, str, ButtonType.YES, ButtonType.NO);
+                ImageView aleetImage = new ImageView(new Image("/alert.png"));
+                aleetImage.setFitWidth(120);
+                aleetImage.setPreserveRatio(true);
+                alert.setGraphic(aleetImage);
+                alert.setResizable(false);
                 alert.setHeaderText(null);
                 alert.setTitle("Conferma uscita");
 
