@@ -10,17 +10,21 @@ import org.asynchttpclient.Dsl;
 public class EpisodeFinder {
 
     public static ArrayList<String> getEpisodeList(char slash, int selectedUrl, String animeScelto, int indiceEpisodi, boolean itaAssoluto, int start) throws IOException, ExecutionException, InterruptedException{
+        boolean episodeStopper = true;
+        
         int i = start;
         ArrayList<String> episodes = new ArrayList<>();
 
-        while(true){
+        while(episodeStopper){
             String name = nameComposer(i, animeScelto, indiceEpisodi, itaAssoluto);
             if(!isPresent(name))
                 break;
             else {
                 episodes.add(name);
             }
-            i++;    
+            i++;
+            if(i > start + 100)
+                break;
         }
 
         return episodes;

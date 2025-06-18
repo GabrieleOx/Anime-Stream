@@ -3,6 +3,7 @@ package com.me;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import javafx.application.Platform;
@@ -11,6 +12,7 @@ import javafx.geometry.Orientation;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -48,6 +50,25 @@ public class Controller {
         loading.setFitWidth(scrollEpisodi.getWidth());
         loading.setPreserveRatio(true);
         scrollEpisodi.setContent(loading);
+
+        int [] starter = {startVals.get(selected)};
+
+        TextInputDialog episodioRicercato = new TextInputDialog("0");
+        episodioRicercato.setTitle("Scelta Episodio");
+        episodioRicercato.setHeaderText("Inserisci il numero dell'episodio che stai cercando\nper caricare solo quelli vicini oppure 0 per\nusare l'automatico");
+        episodioRicercato.setContentText("Numero episodio:");
+
+        Optional<String> result = episodioRicercato.showAndWait();
+
+        result.ifPresent(input -> {
+            int epScelto = Integer.parseInt(input.trim());
+            if(epScelto > 0 && epScelto < nEpisodes.get(selected)*10)
+                if(epScelto-50 > 0)
+                    starter[0] = epScelto-50;
+                else starter[0] = 0;
+        });
+
+        startVals.set(selected, starter[0]);
         
         new Thread(() -> {
             FlowPane f;
