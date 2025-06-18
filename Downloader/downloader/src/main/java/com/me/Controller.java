@@ -26,11 +26,20 @@ public class Controller {
     public static ArrayList<Integer> nEpisodes = new ArrayList<>(), startVals = new ArrayList<>();
     public static ArrayList<Boolean> abslouteITA = new ArrayList<>();
     private static Thread findEpisodes = new Thread();
+    private RadioButton lastPressed = null;
 
     @FXML
     private volatile ScrollPane scrollEpisodi, scrollAnime;
     @FXML
     private TreeView<String> alberoCartella;
+
+    public void setTree(File specific, int selected){
+        TreeItem<String> root = new TreeItem<>(EpisodeFinder.getAnimeName(anime.get(selected)), new ImageView(new Image("/folder.png")));
+        for(String f : specific.list())
+            root.getChildren().add(new TreeItem<>(f));
+
+        alberoCartella.setRoot(root);
+    }
 
     public void loadEpisodeList(char slash, int selected, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException, ExecutionException, InterruptedException{
 
@@ -41,11 +50,7 @@ public class Controller {
         if(!specific.exists())
             specific.mkdir();
 
-        TreeItem<String> root = new TreeItem<>(EpisodeFinder.getAnimeName(anime.get(selected)), new ImageView(new Image("/folder.png")));
-        for(String f : specific.list())
-            root.getChildren().add(new TreeItem<>(f));
-
-        alberoCartella.setRoot(root);
+        setTree(specific, selected);
          
         ImageView loading = new ImageView(new Image("/loading.gif"));
         loading.setFitWidth(scrollEpisodi.getWidth());
@@ -75,9 +80,6 @@ public class Controller {
         });
 
         startVals.set(selected, starter[0]);
-
-        if(findEpisodes.isAlive())
-            findEpisodes.interrupt();
         
         findEpisodes = new Thread(() -> {
             FlowPane f;
@@ -117,7 +119,12 @@ public class Controller {
             final int index = i;
             r.setOnAction(e -> {
                 try {
-                    loadEpisodeList(slash, index, downloadThreads, stopThreads);
+                    if(findEpisodes.isAlive())
+                        lastPressed.setSelected(true);
+                    else{
+                        lastPressed = r;
+                        loadEpisodeList(slash, index, downloadThreads, stopThreads);
+                    }
                 } catch (IOException | ExecutionException | InterruptedException e1) {
                     e1.printStackTrace();
                 }
@@ -127,7 +134,7 @@ public class Controller {
         scrollAnime.setContent(flussoAnime);
     }
 
-    private static FlowPane getEpisodesToPalce(char slash, int scelto, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads, File specific) throws IOException, ExecutionException, InterruptedException{
+    private FlowPane getEpisodesToPalce(char slash, int scelto, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads, File specific) throws IOException, ExecutionException, InterruptedException{
         episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto), startVals.get(scelto));
         FlowPane flussoEpisodi = new FlowPane(Orientation.VERTICAL);
         
@@ -141,7 +148,7 @@ public class Controller {
             b.setFont(new Font("Comic Sans MS", 12));
             final int index = i+1;
             b.setOnAction(e -> {
-                AnimeDownloader.addDownload(downloadThreads, stopThreads, episodi, specific, index, slash);
+                AnimeDownloader.addDownload(downloadThreads, stopThreads, episodi, specific, index, slash, this, scelto);
             });
             flussoEpisodi.getChildren().add(b);
         }

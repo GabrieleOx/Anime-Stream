@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import javafx.application.Platform;
+
 
 
 public class AnimeDownloader {
@@ -125,7 +127,7 @@ public class AnimeDownloader {
         return episodeUrl.substring(j, episodeUrl.length() - 4);
     }
 
-    public static void addDownload(ArrayList<Thread> start, ArrayList<Thread> stop, ArrayList<String> episodi, File cartella, int nEp, char slash){
+    public static void addDownload(ArrayList<Thread> start, ArrayList<Thread> stop, ArrayList<String> episodi, File cartella, int nEp, char slash, Controller c, int selected){
         downloadThredStop.add(false);
         start.add(new Thread(() ->{
             final int iStop = downloadThredStop.size()-1;
@@ -139,6 +141,9 @@ public class AnimeDownloader {
             final int iS = downloadThredStop.size()-1;
             while(!downloadThredStop.get(iS));
             start.get(iS).interrupt();
+            Platform.runLater(() -> {
+                c.setTree(cartella, selected);
+            });
         }));
         stop.get(downloadThredStop.size()-1).start();
     }
