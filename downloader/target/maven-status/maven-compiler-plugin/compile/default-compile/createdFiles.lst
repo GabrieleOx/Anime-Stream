@@ -1,7 +1,7 @@
-com\me\Download$1.class
-com\me\EpisodeFinder.class
-com\me\AnimeDownloader.class
-com\me\AnimeFinder.class
-com\me\Controller.class
-com\me\Download.class
-com\me\Main.class
+com/me/Controller.class
+com/me/AnimeDownloader.class
+com/me/Main.class
+com/me/EpisodeFinder.class
+com/me/Download.class
+com/me/Download$1.class
+com/me/AnimeFinder.class
