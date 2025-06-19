@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Orientation;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
@@ -111,7 +112,21 @@ public class Controller {
     }
 
     public void loadAnimeList(char slash, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads) throws IOException{
-        AnimeFinder.getAnime(slash, anime, nEpisodes, abslouteITA, startVals);
+        
+        if(!AnimeFinder.getAnime(slash, anime, nEpisodes, abslouteITA, startVals)){
+            String message = "Il file folders.txt, che trovi nella cartella documenti, non\ncontiene alcun riferiemnto per il download di anime:\nCerca i link nella cartella Txts su Github...";
+            Alert noAnime = new Alert(Alert.AlertType.ERROR); //Ipotetico link alla repo
+            ImageView errIm = new ImageView(new Image("/alert.png"));
+            errIm.setFitWidth(120);
+            errIm.setPreserveRatio(true);
+            noAnime.setHeaderText(message);
+            noAnime.setTitle("No Anime Found");
+            noAnime.setGraphic(errIm);
+            noAnime.setResizable(false);
+            noAnime.setOnCloseRequest(e -> System.exit(0));
+            noAnime.showAndWait();
+        }
+
         FlowPane flussoAnime = new FlowPane(Orientation.VERTICAL);
         ToggleGroup animeGroup = new ToggleGroup();
 

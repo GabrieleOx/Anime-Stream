@@ -8,7 +8,7 @@ import java.util.Locale;
 
 public class AnimeFinder {
 
-    public static void getAnime(char slash, ArrayList<String> anime, ArrayList<Integer> nEpisodes, ArrayList<Boolean> abslouteITA, ArrayList<Integer> startValues) throws IOException{
+    public static boolean  getAnime(char slash, ArrayList<String> anime, ArrayList<Integer> nEpisodes, ArrayList<Boolean> abslouteITA, ArrayList<Integer> startValues) throws IOException{
         
         String docs;
 
@@ -28,10 +28,10 @@ public class AnimeFinder {
 
         try (FileInputStream olFolders = new FileInputStream(links)) {
             if(links.length() == 0){
-                System.out.println("Non sono presenti anime...");
-                System.exit(0);
+                return false;
             }else reader(olFolders, anime, nEpisodes, abslouteITA, startValues);
         }
+        return true;
     }
 
     private static void reader(FileInputStream x, ArrayList<String> arr, ArrayList<Integer> nEps, ArrayList<Boolean> absITA, ArrayList<Integer> starters) throws IOException{
