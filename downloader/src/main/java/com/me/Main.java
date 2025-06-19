@@ -16,7 +16,7 @@ import javafx.stage.Stage;
 
 //Gabriele ricorda: per avviare javafx con maven usa il comando "mvn javafx:run" dalla cartella del progetto (qui demo)//
 //ma prima sul pc IL devi eseguire su un cmd esterno su cui poi avvii il prog -> set PATH=C:\Users\gabriele.ossola\Maven\apache-maven-3.9.10\bin;%PATH%
-//per arrivare sulla cartella da quella utente: cd Documents\codes\videodownloader\anime-stream\Downloader\downloader
+//per arrivare sulla cartella da quella utente: cd Documents\codes\anime-stream\downloader
 public class Main extends Application {
 
     public static void main(String[] args) throws IOException {
