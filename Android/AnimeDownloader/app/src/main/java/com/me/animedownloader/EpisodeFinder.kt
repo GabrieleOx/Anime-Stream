@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutionException
 
 @Throws(IOException::class, ExecutionException::class, InterruptedException::class)
 fun getEpisodeList(
-    slash: Char,
     selectedUrl: Int,
     animeScelto: String,
     indiceEpisodi: Int,

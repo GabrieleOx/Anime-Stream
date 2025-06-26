@@ -39,21 +39,12 @@ class Controller {
 
     @Throws(IOException::class, ExecutionException::class, InterruptedException::class)
     fun loadEpisodeList(
-        slash: Char,
         selected: Int,
         downloadThreads: ArrayList<Thread>,
-        stopThreads: ArrayList<Thread>
+        stopThreads: ArrayList<Thread>,
+        contesto: Context
     ) {
-        val docs = "Documents"
-
-        val cartella =
-            File(System.getProperty("user.home") + slash + docs + slash + "AnimeDownloader" + slash + "ANIME" + slash)
-        if (!cartella.exists()) cartella.mkdir()
-        val specific =
-            File(cartella.absolutePath + slash + getAnimeName(anime[selected]) + slash)
-        if (!specific.exists()) specific.mkdir()
-
-        setTree(specific, selected)
+        //setTree(specific, selected)
 
         val starter = intArrayOf(startVals[selected])
 
@@ -68,7 +59,7 @@ class Controller {
 
         findEpisodes = Thread {
             try {
-                getEpisodesToPalce(slash, selected, downloadThreads, stopThreads, specific)
+                //getEpisodesToPalce(selected, downloadThreads, stopThreads, specific)
             } catch (e: IOException) {
                 System.err.println("Errore nel caricamento degli episodi...")
             } catch (e: ExecutionException) {
@@ -82,7 +73,6 @@ class Controller {
 
     @Throws(IOException::class)
     fun loadAnimeList(
-        slash: Char,
         downloadThreads: ArrayList<Thread>,
         stopThreads: ArrayList<Thread>,
         contesto: Context,
@@ -90,10 +80,6 @@ class Controller {
     ) {
         AnimeFinder.getAnime(anime, nEpisodes, abslouteITA, startVals, attivita, contesto)
 
-        val message = "Ciao Ciao"
-        val duration = Toast.LENGTH_LONG
-        val errorMessage = Toast.makeText(contesto, message, duration)
-        errorMessage.show()
         for (i in anime.indices) {
             val index = i
             //r.setOnAction(e -> {
@@ -101,7 +87,7 @@ class Controller {
                 if (findEpisodes.isAlive) {
                 } else {
                     //lastPressed = r;
-                    loadEpisodeList(slash, index, downloadThreads, stopThreads)
+                    loadEpisodeList(index, downloadThreads, stopThreads, contesto)
                 }
             } catch (e1: IOException) {
                 e1.printStackTrace()
@@ -116,14 +102,13 @@ class Controller {
 
     @Throws(IOException::class, ExecutionException::class, InterruptedException::class)
     private fun getEpisodesToPalce(
-        slash: Char,
         scelto: Int,
         downloadThreads: ArrayList<Thread>,
         stopThreads: ArrayList<Thread>,
         specific: File
     ): ArrayList<String> {
         episodi = getEpisodeList(
-            slash, scelto,
+            scelto,
             anime[scelto], nEpisodes[scelto], abslouteITA[scelto], startVals[scelto]
         )
         val eps = ArrayList<String>()
