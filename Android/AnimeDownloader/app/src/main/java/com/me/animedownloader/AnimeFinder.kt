@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +27,7 @@ class AnimeFinder {
             nEpisodes: ArrayList<Int>,
             abslouteITA: ArrayList<Boolean>,
             startValues: ArrayList<Int>,
-            activity: AppCompatActivity,
+            activity: ComponentActivity,
             contesto: Context
         ){
 

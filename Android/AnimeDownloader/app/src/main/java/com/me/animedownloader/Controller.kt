@@ -2,6 +2,7 @@ package com.me.animedownloader
 
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
 import java.io.IOException
@@ -11,25 +12,6 @@ import kotlin.system.exitProcess
 
 
 class Controller {
-    companion object{
-        @JvmStatic
-        var anime: ArrayList<String> = ArrayList()
-
-        @JvmStatic
-        var episodi: java.util.ArrayList<String> = ArrayList()
-
-        @JvmStatic
-        var nEpisodes: ArrayList<Int> = ArrayList()
-
-        @JvmStatic
-        var startVals: java.util.ArrayList<Int> = java.util.ArrayList<Int>()
-
-        @JvmStatic
-        var abslouteITA: ArrayList<Boolean> = ArrayList()
-
-        @JvmStatic
-        private var findEpisodes: Thread = Thread()
-    }
 
     fun setTree(specific: File, selected: Int) {
         for (f in specific.list()) {
@@ -37,7 +19,7 @@ class Controller {
         //Codice per la visione ad albero
     }
 
-    @Throws(IOException::class, ExecutionException::class, InterruptedException::class)
+    /*@Throws(IOException::class, ExecutionException::class, InterruptedException::class)
     fun loadEpisodeList(
         selected: Int,
         downloadThreads: ArrayList<Thread>,
@@ -76,28 +58,10 @@ class Controller {
         downloadThreads: ArrayList<Thread>,
         stopThreads: ArrayList<Thread>,
         contesto: Context,
-        attivita: AppCompatActivity
-    ) {
+        attivita: ComponentActivity
+    ): ArrayList<String> {
         AnimeFinder.getAnime(anime, nEpisodes, abslouteITA, startVals, attivita, contesto)
-
-        for (i in anime.indices) {
-            val index = i
-            //r.setOnAction(e -> {
-            try {
-                if (findEpisodes.isAlive) {
-                } else {
-                    //lastPressed = r;
-                    loadEpisodeList(index, downloadThreads, stopThreads, contesto)
-                }
-            } catch (e1: IOException) {
-                e1.printStackTrace()
-            } catch (e1: ExecutionException) {
-                e1.printStackTrace()
-            } catch (e1: InterruptedException) {
-                e1.printStackTrace()
-            }
-            //});
-        }
+        return anime
     }
 
     @Throws(IOException::class, ExecutionException::class, InterruptedException::class)
@@ -121,5 +85,5 @@ class Controller {
             });*/
         }
         return eps
-    }
+    }*/
 }
