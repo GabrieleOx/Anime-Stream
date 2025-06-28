@@ -69,7 +69,7 @@ class Download(private var fileUrl: String?, private var filePath: String?) {
                 if (contentLength != null) {
                     totalBytes = contentLength.toLong()
                 }
-                AnimeDownloader.downloadThredStop.set(indiceStop, true)
+                downloadThredStop.set(indiceStop, true)
                 opStream.close()
                 downloadComplete.complete(null)
                 return null
@@ -82,7 +82,7 @@ class Download(private var fileUrl: String?, private var filePath: String?) {
                     Errore durante il download: ${t.message}
                     """.trimIndent()
                 )
-                AnimeDownloader.downloadThredStop.set(indiceStop, true)
+                downloadThredStop.set(indiceStop, true)
                 try {
                     opStream.close()
                 } catch (ignored: IOException) {
@@ -92,7 +92,7 @@ class Download(private var fileUrl: String?, private var filePath: String?) {
         })
 
         try {
-            while (!AnimeDownloader.downloadThredStop.get(indiceStop));
+            while (!downloadThredStop.get(indiceStop));
         } finally {
             client.close() // CHIUSURA SICURA
         }

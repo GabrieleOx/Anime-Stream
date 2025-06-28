@@ -157,7 +157,7 @@ public class Controller {
     }
 
     private FlowPane getEpisodesToPalce(char slash, int scelto, ArrayList<Thread> downloadThreads, ArrayList<Thread> stopThreads, File specific) throws IOException, ExecutionException, InterruptedException{
-        episodi = EpisodeFinder.getEpisodeList(slash, scelto, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto), startVals.get(scelto));
+        episodi = EpisodeFinder.getEpisodeList(slash, anime.get(scelto), nEpisodes.get(scelto), abslouteITA.get(scelto), startVals.get(scelto));
         FlowPane flussoEpisodi = new FlowPane(Orientation.VERTICAL);
         
         flussoEpisodi.setPrefWidth(330);

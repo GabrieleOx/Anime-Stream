@@ -13,7 +13,7 @@ fun main() {
 fun onClose() {
     var downloadInCorso = 0
     var downloadTrovati: Int
-    for (i in 0..<AnimeDownloader.downloadThredStop.size) if (!AnimeDownloader.downloadThredStop[i]
+    for (i in 0..<downloadThredStop.size) if (!downloadThredStop[i]
     ) downloadInCorso++
 
     if (downloadInCorso > 0) {
@@ -26,7 +26,7 @@ fun onClose() {
             downloadTrovati = downloadInCorso
             while (downloadTrovati > 0) {
                 downloadTrovati = 0
-                for (i in 0..<AnimeDownloader.downloadThredStop.size) if (!AnimeDownloader.downloadThredStop[i]
+                for (i in 0..<downloadThredStop.size) if (!downloadThredStop[i]
                 ) downloadTrovati++
             }
             exitProcess(0)

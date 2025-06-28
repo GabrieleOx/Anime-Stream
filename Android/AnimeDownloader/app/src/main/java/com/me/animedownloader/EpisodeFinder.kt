@@ -8,12 +8,12 @@ import java.util.concurrent.ExecutionException
 
 @Throws(IOException::class, ExecutionException::class, InterruptedException::class)
 fun getEpisodeList(
-    selectedUrl: Int,
     animeScelto: String,
     indiceEpisodi: Int,
     itaAssoluto: Boolean,
     start: Int
 ): ArrayList<String> {
+
     var i = start
     val episodes = ArrayList<String>()
 

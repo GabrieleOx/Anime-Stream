@@ -1,14 +1,20 @@
 package com.me.animedownloader
 
+import android.content.Context
 import android.os.Bundle
+import android.text.Layout
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,11 +55,19 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.me.animedownloader.ui.theme.AnimeDownloaderTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
+import java.io.File
+import java.io.IOException
 import java.nio.file.WatchEvent
+import java.util.Scanner
+import java.util.concurrent.ExecutionException
 
 data class BottomNavItem(
     val title: String,
@@ -76,13 +91,14 @@ val PressStart2PFontFamily = FontFamily(
 
 
 class MainActivity : ComponentActivity() {
+    private val viewModel by viewModels<EpSelectionViewModel>()
 
     companion object{
         @JvmStatic
         var anime: ArrayList<String> = ArrayList()
 
         @JvmStatic
-        var episodi: java.util.ArrayList<String> = ArrayList()
+        var episodi: List<String>? = null
 
         @JvmStatic
         var nEpisodes: ArrayList<Int> = ArrayList()
@@ -92,9 +108,6 @@ class MainActivity : ComponentActivity() {
 
         @JvmStatic
         var abslouteITA: ArrayList<Boolean> = ArrayList()
-
-        @JvmStatic
-        var findEpisodes: Thread = Thread()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,7 +119,10 @@ class MainActivity : ComponentActivity() {
 
             setContent {
             AnimeDownloaderTheme {
-                var items = listOf<BottomNavItem>(
+                val (selectedAnime, onAnimeSelected) = remember { mutableStateOf(String()) }
+                val scope = rememberCoroutineScope()
+                val (isAlive, onSearching) = remember { mutableStateOf(false) }
+                val items = listOf<BottomNavItem>(
                     BottomNavItem(
                         title = "Anime",
                         selectedItem = Icons.Filled.Archive,
@@ -170,7 +186,7 @@ class MainActivity : ComponentActivity() {
                         }
                     ) { innerPadding ->
                         if(selectedItemIndex == 0)
-                            AnimeScreen(innerPadding, anime)
+                            AnimeScreen(innerPadding, anime, viewModel, this, selectedAnime, onAnimeSelected, isAlive, onSearching, scope)
                         else if(selectedItemIndex == 1)
                             EpisodeScreen(innerPadding)
                         else AvailableListScreen(innerPadding)
@@ -182,9 +198,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AnimeScreen(p: PaddingValues, animeNames: ArrayList<String>) {
-    val (selectedAnime, onAnimeSelected) = remember { mutableStateOf(String()) }
-    var lastSelected by remember { mutableStateOf(String()) }
+fun AnimeScreen(
+    p: PaddingValues,
+    animeNames: List<String>,
+    viewModel: EpSelectionViewModel,
+    contesto: Context,
+    selectedAnime: String,
+    onAnimeSelected:(String) -> Unit,
+    isAlive: Boolean,
+    onSearching:(Boolean) -> Unit,
+    scope: CoroutineScope
+) {
+    var indexAnimeScelto by remember { mutableIntStateOf(0) }
     Column (
         modifier = Modifier
             .background(Color(185, 131, 242))
@@ -215,10 +240,10 @@ fun AnimeScreen(p: PaddingValues, animeNames: ArrayList<String>) {
                             selected = currentName == selectedAnime,
                             onClick = {
                                 try {
-                                    if (MainActivity.findEpisodes.isAlive) {
-                                    } else {
+                                    if (!isAlive) {
                                         onAnimeSelected(currentName)
-                                        //loadEpisodeList(index, downloadThreads, stopThreads, contesto)
+                                        indexAnimeScelto = index
+                                        viewModel.onAnimeChoose()
                                     }
                                 } catch (e1: InterruptedException) {
                                     e1.printStackTrace()
@@ -240,15 +265,77 @@ fun AnimeScreen(p: PaddingValues, animeNames: ArrayList<String>) {
             }
         }
     }
+    if(viewModel.isDialogShown){
+        SelectionDialog (
+            onDismiss = {
+                viewModel.onDismissDialog()
+                loadEpisodeList(indexAnimeScelto, 0, contesto, onSearching, scope)
+            },
+            onConfirm = { scelto ->
+                viewModel.onDismissDialog()
+                loadEpisodeList(indexAnimeScelto, scelto, contesto, onSearching, scope)
+            },
+            contesto
+        )
+    }
 }
 
 @Composable
 fun EpisodeScreen(p: PaddingValues) {
-    Text(
-        text = "Episodi usciti",
-        modifier = Modifier.padding(p)
-
-    )
+    if(MainActivity.episodi == null){
+        Row (
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(255, 139, 0, 255))
+                .padding(p),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Ancora nulla qui...",
+                modifier = Modifier
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontSize = 26.sp,
+                fontFamily = BitcountFontFamily,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }else {
+        Column (
+            modifier = Modifier
+                .background(Color(185, 131, 242))
+                .padding(p)
+                .padding(vertical = 15.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text(
+                text = "Episodi caricati:",
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = PressStart2PFontFamily
+            )
+            LazyColumn (
+                modifier = Modifier
+                    .selectableGroup()
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                val eps = MainActivity.episodi
+                itemsIndexed(MainActivity.episodi as List<String>){ index, episodio ->
+                    Button(
+                        onClick = { TODO() }
+                    ) {
+                        Text(
+                            text = episodio
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 @Composable
 fun AvailableListScreen(p: PaddingValues) {
@@ -256,4 +343,39 @@ fun AvailableListScreen(p: PaddingValues) {
         text = "Episodi scaricati",
         modifier = Modifier.padding(p)
     )
+}
+
+
+
+@Throws(IOException::class, ExecutionException::class, InterruptedException::class)
+fun loadEpisodeList(
+    selected: Int,
+    epScelto: Int,
+    contesto: Context,
+    onSearching:(Boolean) -> Unit,
+    scope: CoroutineScope
+) {
+    var selezionato = epScelto
+    if (epScelto > 0 && epScelto < MainActivity.nEpisodes[selected] * 10) if (epScelto - 50 > 0) selezionato =
+        epScelto - 50
+
+    MainActivity.startVals[selected] = selezionato
+
+    scope.launch {
+        onSearching(true)
+        try {
+            Toast.makeText(contesto, "Ciao Ciao", Toast.LENGTH_SHORT).show()
+            MainActivity.episodi = getEpisodeList(
+                selected,
+                MainActivity.anime[selected], MainActivity.nEpisodes[selected], MainActivity.abslouteITA[selected], MainActivity.startVals[selected]
+            )
+        } catch (e: IOException) {
+            System.err.println("Errore nel caricamento degli episodi...")
+        } catch (e: ExecutionException) {
+            System.err.println("Errore nel caricamento degli episodi...")
+        } catch (e: InterruptedException) {
+            System.err.println("Errore nel caricamento degli episodi...")
+        }
+        onSearching(false)
+    }
 }
