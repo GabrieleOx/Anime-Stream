@@ -4,10 +4,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
-import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.Dsl;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class EpisodeFinder {
+
+    private static final OkHttpClient client = new OkHttpClient();
 
     public static ArrayList<String> getEpisodeList(char slash, String animeScelto, int indiceEpisodi, boolean itaAssoluto, int start) throws IOException, ExecutionException, InterruptedException{
         boolean episodeStopper = true;
@@ -33,7 +37,18 @@ public class EpisodeFinder {
     public static boolean isPresent(String url) throws IOException, InterruptedException, ExecutionException{
         boolean ret [] = new boolean[1];
         changeRet(ret, false);
-        try (AsyncHttpClient client = Dsl.asyncHttpClient()) {
+
+        Call call = client.newCall(new Request.Builder().url(url).build()); //è una richiesta sincrona.....
+        Response res = call.execute();
+
+        int statusCode = res.code();
+        if (statusCode == 200) {
+            changeRet(ret, true);
+        } else changeRet(ret, false);
+        
+        res.close();
+
+        /*try (AsyncHttpClient client = Dsl.asyncHttpClient()) {
 
             client.prepareHead(url).execute().toCompletableFuture().thenAccept(response -> {
                 int statusCode = response.getStatusCode();
@@ -41,7 +56,8 @@ public class EpisodeFinder {
                     changeRet(ret, true);
                 } else changeRet(ret, false);
             }).join();  // Aspetta che finisca la richiesta async
-        }
+        }*/
+
         return ret[0];
     }
 

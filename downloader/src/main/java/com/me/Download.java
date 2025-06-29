@@ -3,15 +3,17 @@ package com.me;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.asynchttpclient.AsyncCompletionHandler;
-import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.AsyncHttpClientConfig;
-import org.asynchttpclient.Dsl;
-import org.asynchttpclient.HttpResponseBodyPart;
-import org.asynchttpclient.Response;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class Download {
     private final String fileUrl, filePath;
@@ -22,59 +24,75 @@ public class Download {
     }
     
     public void scarica(int indiceStop) throws IOException{
-        AsyncHttpClientConfig config = Dsl.config()
-            .setConnectTimeout(30_000)
-            .setReadTimeout(120_000)
-            .setRequestTimeout(600_000)
-            .build();
+        // 1. Configura OkHttpClient con timeout equivalenti
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(120, TimeUnit.SECONDS)
+                .writeTimeout(600, TimeUnit.SECONDS)
+                .build();
 
-        AsyncHttpClient client = Dsl.asyncHttpClient(config);
-
+        // 2. Prepara stream e variabili
         FileOutputStream opStream = new FileOutputStream(getFile(this.fileUrl, this.filePath));
         AtomicLong downloadedBytes = new AtomicLong(0);
         CompletableFuture<Void> downloadComplete = new CompletableFuture<>();
 
-        client.prepareGet(this.fileUrl).execute(new AsyncCompletionHandler<Void>() {
-            long totalBytes = -1;
+        // 3. Costruisci richiesta GET
+        Request request = new Request.Builder()
+                .url(this.fileUrl)
+                .build();
 
+        // 4. Avvia download asincrono
+        client.newCall(request).enqueue(new Callback() {
             @Override
-            public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
-                opStream.getChannel().write(bodyPart.getBodyByteBuffer());
-                long current = downloadedBytes.addAndGet(bodyPart.length());
-                //System.out.print("\rScaricati: " + current + " bytes");
-                return State.CONTINUE;
-            }
-
-            @Override
-            public Void onCompleted(Response response) throws Exception {
-                String contentLength = response.getHeader("Content-Length");
-                if (contentLength != null) {
-                    totalBytes = Long.parseLong(contentLength);
-                }
-                AnimeDownloader.downloadThredStop.set(indiceStop, true);
-                opStream.close();
-                downloadComplete.complete(null);
-                return null;
-            }
-
-            @Override
-            public void onThrowable(Throwable t) {
-                System.err.println("\nErrore durante il download: " + t.getMessage());
+            public void onFailure(Call call, IOException e) {
+                System.err.println("\nErrore durante il download: " + e.getMessage());
                 AnimeDownloader.downloadThredStop.set(indiceStop, true);
                 try {
                     opStream.close();
                 } catch (IOException ignored) {}
-                downloadComplete.completeExceptionally(t);
+                downloadComplete.completeExceptionally(e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    onFailure(call, new IOException("Risposta non valida: " + response));
+                    return;
+                }
+
+                long totalBytes = -1;
+                String clHeader = response.header("Content-Length");
+                if (clHeader != null) {
+                    totalBytes = Long.parseLong(clHeader);
+                }
+
+                try (ResponseBody body = response.body();
+                    InputStream input = body.byteStream()) {
+
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+
+                    while ((bytesRead = input.read(buffer)) != -1) {
+                        opStream.write(buffer, 0, bytesRead);
+                        downloadedBytes.addAndGet(bytesRead);
+                        // System.out.print("\rScaricati: " + downloadedBytes.get() + " bytes");
+                    }
+
+                    AnimeDownloader.downloadThredStop.set(indiceStop, true);
+                    opStream.close();
+                    downloadComplete.complete(null);
+                } catch (IOException e) {
+                    onFailure(call, e);
+                }
             }
         });
 
+        // 5. Attesa del completamento in modo "bloccante" (come il while del tuo codice)
         try {
-            while(!AnimeDownloader.downloadThredStop.get(indiceStop));
+            downloadComplete.join();  // blocca finché non completa
         } finally {
-            client.close(); // CHIUSURA SICURA
+            System.out.println("Risorse chiuse correttamente.");
         }
-
-        System.out.println("Risorse chiuse correttamente.");
     }
 
     private static File getFile(String url, String path){
