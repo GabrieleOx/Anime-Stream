@@ -1,7 +1,8 @@
 package com.me.animedownloader
 
-import org.asynchttpclient.Dsl
-import org.asynchttpclient.Response
+import okhttp3.Call
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.ExecutionException
 
@@ -13,13 +14,14 @@ fun getEpisodeList(
     itaAssoluto: Boolean,
     start: Int
 ): ArrayList<String> {
+    val client = OkHttpClient()
 
-    var i = start
+    var i = if(start == 0) 1 else start
     val episodes = ArrayList<String>()
 
     while (true) {
         val name = nameComposer(i, animeScelto, indiceEpisodi, itaAssoluto)
-        if (!isPresent(name)) break
+        if (!isPresent(name, client)) break
         else {
             episodes.add(name)
         }
@@ -31,19 +33,15 @@ fun getEpisodeList(
 }
 
 @Throws(IOException::class, InterruptedException::class, ExecutionException::class)
-fun isPresent(url: String?): Boolean {
-    val ret = BooleanArray(1)
-    changeRet(ret, false)
-    Dsl.asyncHttpClient().use { client ->
-        client.prepareHead(url).execute().toCompletableFuture()
-            .thenAccept { response: Response ->
-                val statusCode = response.statusCode
-                if (statusCode == 200) {
-                    changeRet(ret, true)
-                } else changeRet(ret, false)
-            }.join() // Aspetta che finisca la richiesta async
+fun isPresent(url: String, client: OkHttpClient): Boolean {
+    var ret = false
+
+    val call: Call = client.newCall(Request.Builder().url(url).build()) //è una richiesta sincrona.....
+    call.execute().use { res ->
+        val statusCode: Int = res.code
+        ret = statusCode == 200
     }
-    return ret[0]
+    return ret
 }
 
 private fun changeRet(arr: BooleanArray, `val`: Boolean) {

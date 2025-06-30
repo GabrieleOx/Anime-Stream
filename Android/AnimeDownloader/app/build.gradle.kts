@@ -76,9 +76,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.4")
 
     implementation("com.google.android.material:material:1.12.0")
-
-    implementation("org.asynchttpclient:async-http-client:2.12.3")
-    implementation("org.slf4j:slf4j-log4j12:1.7.36")
+    implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.14")
     implementation("org.apache.poi:poi:5.2.5")
     implementation("org.apache.poi:poi-ooxml:5.2.5")
 

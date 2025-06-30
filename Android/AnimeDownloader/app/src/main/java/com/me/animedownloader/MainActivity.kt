@@ -1,12 +1,14 @@
 package com.me.animedownloader
 
 import android.content.Context
+import android.media.Image
 import android.os.Bundle
 import android.text.Layout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +53,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -61,8 +66,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.me.animedownloader.ui.theme.AnimeDownloaderTheme
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.nio.file.WatchEvent
@@ -188,7 +195,7 @@ class MainActivity : ComponentActivity() {
                         if(selectedItemIndex == 0)
                             AnimeScreen(innerPadding, anime, viewModel, this, selectedAnime, onAnimeSelected, isAlive, onSearching, scope)
                         else if(selectedItemIndex == 1)
-                            EpisodeScreen(innerPadding)
+                            EpisodeScreen(innerPadding, scope)
                         else AvailableListScreen(innerPadding)
                     }
                 }
@@ -210,57 +217,71 @@ fun AnimeScreen(
     scope: CoroutineScope
 ) {
     var indexAnimeScelto by remember { mutableIntStateOf(0) }
-    Column (
+    Box(
         modifier = Modifier
-            .background(Color(185, 131, 242))
-            .padding(p)
-            .padding(vertical = 15.dp)
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        Text(
-            text = "Anime disponibili:",
+            .fillMaxSize()
+    ){
+        Image(
+            painter = painterResource(R.drawable.sukuna),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .align(Alignment.CenterHorizontally),
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = PressStart2PFontFamily
+                .matchParentSize()
+                .padding(bottom = 100.dp)
         )
-        LazyColumn (
+
+        Column (
             modifier = Modifier
-                .selectableGroup()
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(p)
+                .padding(vertical = 15.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            itemsIndexed(animeNames){ index, currentName ->
-                Row (
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .selectable(
-                            selected = currentName == selectedAnime,
-                            onClick = {
-                                try {
-                                    if (!isAlive) {
-                                        onAnimeSelected(currentName)
-                                        indexAnimeScelto = index
-                                        viewModel.onAnimeChoose()
+            Text(
+                text = "Anime disponibili:",
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = PressStart2PFontFamily
+            )
+            LazyColumn (
+                modifier = Modifier
+                    .selectableGroup()
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                itemsIndexed(animeNames){ index, currentName ->
+                    Row (
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .selectable(
+                                selected = currentName == selectedAnime,
+                                onClick = {
+                                    try {
+                                        if (!isAlive) {
+                                            onAnimeSelected(currentName)
+                                            indexAnimeScelto = index
+                                            viewModel.onAnimeChoose()
+                                        }
+                                    } catch (e1: InterruptedException) {
+                                        e1.printStackTrace()
                                     }
-                                } catch (e1: InterruptedException) {
-                                    e1.printStackTrace()
-                                }
-                            },
-                            role = Role.RadioButton
+                                },
+                                role = Role.RadioButton
+                            )
+                    ) {
+                        RadioButton(
+                            selected = currentName == selectedAnime,
+                            onClick = null
                         )
-                ) {
-                    RadioButton(
-                        selected = currentName == selectedAnime,
-                        onClick = null
-                    )
-                    Text(
-                        text = getAnimeName(currentName),
-                        fontSize = 18.sp,
-                        fontFamily = ComicSansFontFamily
-                    )
+                        Text(
+                            text = getAnimeName(currentName),
+                            fontSize = 18.sp,
+                            fontFamily = ComicSansFontFamily,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -281,55 +302,69 @@ fun AnimeScreen(
 }
 
 @Composable
-fun EpisodeScreen(p: PaddingValues) {
-    if(MainActivity.episodi == null){
-        Row (
+fun EpisodeScreen(
+    p: PaddingValues,
+    scope: CoroutineScope
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ){
+        Image(
+            painter = painterResource(R.drawable.spyxfamily),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color(255, 139, 0, 255))
-                .padding(p),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Ancora nulla qui...",
+                .matchParentSize()
+                .padding(bottom = 100.dp)
+        )
+
+        if(MainActivity.episodi == null){
+            Row (
                 modifier = Modifier
-                    .fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontSize = 26.sp,
-                fontFamily = BitcountFontFamily,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }else {
-        Column (
-            modifier = Modifier
-                .background(Color(185, 131, 242))
-                .padding(p)
-                .padding(vertical = 15.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text(
-                text = "Episodi caricati:",
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = PressStart2PFontFamily
-            )
-            LazyColumn (
-                modifier = Modifier
-                    .selectableGroup()
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .fillMaxSize()
+                    .padding(p),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val eps = MainActivity.episodi
-                itemsIndexed(MainActivity.episodi as List<String>){ index, episodio ->
-                    Button(
-                        onClick = { TODO() }
-                    ) {
-                        Text(
-                            text = episodio
+                Text(
+                    text = "Ancora nulla qui...",
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 26.sp,
+                    fontFamily = BitcountFontFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }else {
+            Column (
+                modifier = Modifier
+                    .padding(p)
+                    .padding(vertical = 15.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Text(
+                    text = "Episodi caricati:",
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = PressStart2PFontFamily
+                )
+                LazyColumn (
+                    modifier = Modifier
+                        .selectableGroup()
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val eps = MainActivity.episodi
+                    itemsIndexed(MainActivity.episodi as List<String>){ index, episodio ->
+                        EpisodeButton(
+                            text = getSingleEp(episodio),
+                            onClick = { TODO() }
                         )
                     }
                 }
@@ -339,10 +374,19 @@ fun EpisodeScreen(p: PaddingValues) {
 }
 @Composable
 fun AvailableListScreen(p: PaddingValues) {
-    Text(
-        text = "Episodi scaricati",
-        modifier = Modifier.padding(p)
-    )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ){
+        Image(
+            painter = painterResource(R.drawable.blackbutler),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .matchParentSize()
+                .padding(bottom = 100.dp)
+        )
+    }
 }
 
 
@@ -362,20 +406,25 @@ fun loadEpisodeList(
     MainActivity.startVals[selected] = selezionato
 
     scope.launch {
-        onSearching(true)
-        try {
-            Toast.makeText(contesto, "Ciao Ciao", Toast.LENGTH_SHORT).show()
-            MainActivity.episodi = getEpisodeList(
-                selected,
-                MainActivity.anime[selected], MainActivity.nEpisodes[selected], MainActivity.abslouteITA[selected], MainActivity.startVals[selected]
-            )
-        } catch (e: IOException) {
-            System.err.println("Errore nel caricamento degli episodi...")
-        } catch (e: ExecutionException) {
-            System.err.println("Errore nel caricamento degli episodi...")
-        } catch (e: InterruptedException) {
-            System.err.println("Errore nel caricamento degli episodi...")
+        withContext(Dispatchers.IO){
+            val x =("Sono su thread: ${Thread.currentThread().name}")
+            println(x)
+            onSearching(true)
+            try {
+                MainActivity.episodi = getEpisodeList(
+                    MainActivity.anime[selected],
+                    MainActivity.nEpisodes[selected],
+                    MainActivity.abslouteITA[selected],
+                    MainActivity.startVals[selected]
+                )
+            } catch (e: IOException) {
+                Toast.makeText(contesto, "1Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
+            } catch (e: ExecutionException) {
+                Toast.makeText(contesto, "2Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
+            } catch (e: InterruptedException) {
+                Toast.makeText(contesto, "3Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
+            }
+            onSearching(false)
         }
-        onSearching(false)
     }
 }

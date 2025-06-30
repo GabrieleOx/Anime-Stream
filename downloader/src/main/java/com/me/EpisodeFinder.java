@@ -11,17 +11,15 @@ import okhttp3.Response;
 
 public class EpisodeFinder {
 
-    private static final OkHttpClient client = new OkHttpClient();
-
     public static ArrayList<String> getEpisodeList(char slash, String animeScelto, int indiceEpisodi, boolean itaAssoluto, int start) throws IOException, ExecutionException, InterruptedException{
-        boolean episodeStopper = true;
+        final OkHttpClient client = new OkHttpClient();
         
         int i = start;
         ArrayList<String> episodes = new ArrayList<>();
 
-        while(episodeStopper){
+        while(true){
             String name = nameComposer(i, animeScelto, indiceEpisodi, itaAssoluto);
-            if(!isPresent(name))
+            if(!isPresent(name, client))
                 break;
             else {
                 episodes.add(name);
@@ -34,35 +32,16 @@ public class EpisodeFinder {
         return episodes;
     }
 
-    public static boolean isPresent(String url) throws IOException, InterruptedException, ExecutionException{
-        boolean ret [] = new boolean[1];
-        changeRet(ret, false);
+    public static boolean isPresent(String url, OkHttpClient client) throws IOException, InterruptedException, ExecutionException{
+        boolean ret = false;
 
         Call call = client.newCall(new Request.Builder().url(url).build()); //è una richiesta sincrona.....
-        Response res = call.execute();
+        try (Response res = call.execute()) {
+            int statusCode = res.code();
+            ret = statusCode == 200;
+        }
 
-        int statusCode = res.code();
-        if (statusCode == 200) {
-            changeRet(ret, true);
-        } else changeRet(ret, false);
-        
-        res.close();
-
-        /*try (AsyncHttpClient client = Dsl.asyncHttpClient()) {
-
-            client.prepareHead(url).execute().toCompletableFuture().thenAccept(response -> {
-                int statusCode = response.getStatusCode();
-                if (statusCode == 200) {
-                    changeRet(ret, true);
-                } else changeRet(ret, false);
-            }).join();  // Aspetta che finisca la richiesta async
-        }*/
-
-        return ret[0];
-    }
-
-    private static void changeRet(boolean [] arr, boolean val){
-        arr[0] = val;
+        return ret;
     }
 
     private static String nameComposer(int epNumber, String baseUrl, int totEpisodi, boolean absITA){

@@ -1,15 +1,15 @@
 package com.me.animedownloader
 
-import org.asynchttpclient.AsyncCompletionHandler
-import org.asynchttpclient.AsyncHandler
-import org.asynchttpclient.AsyncHttpClientConfig
-import org.asynchttpclient.Dsl
-import org.asynchttpclient.HttpResponseBodyPart
-import org.asynchttpclient.Response
+import okhttp3.Call
+import okhttp3.OkHttpClient
+import okhttp3.Callback
+import okhttp3.Request
+import okhttp3.Response
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 
@@ -35,68 +35,76 @@ class Download(private var fileUrl: String?, private var filePath: String?) {
 
     @Throws(IOException::class)
     fun scarica(indiceStop: Int) {
-        val config: AsyncHttpClientConfig = Dsl.config()
-            .setConnectTimeout(30000)
-            .setReadTimeout(120000)
-            .setRequestTimeout(600000)
+        // 1. Configura OkHttpClient con timeout equivalenti
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(600, TimeUnit.SECONDS)
             .build()
 
-        val client = Dsl.asyncHttpClient(config)
-
-        val opStream = FileOutputStream(
-            getFile(
-                fileUrl!!,
-                filePath!!
-            )
-        )
+        // 2. Prepara stream e variabili
+        val opStream = FileOutputStream(getFile(this.fileUrl!!, this.filePath!!))
         val downloadedBytes = AtomicLong(0)
         val downloadComplete = CompletableFuture<Void?>()
 
-        client.prepareGet(this.fileUrl).execute<Void>(object : AsyncCompletionHandler<Void?>() {
-            var totalBytes: Long = -1
+        // 3. Costruisci richiesta GET
+        val request: Request = Request.Builder()
+            .url(this.fileUrl!!)
+            .build()
 
-            @Throws(Exception::class)
-            override fun onBodyPartReceived(bodyPart: HttpResponseBodyPart): AsyncHandler.State {
-                opStream.channel.write(bodyPart.bodyByteBuffer)
-                val current = downloadedBytes.addAndGet(bodyPart.length().toLong())
-                //System.out.print("\rScaricati: " + current + " bytes");
-                return AsyncHandler.State.CONTINUE
-            }
-
-            @Throws(Exception::class)
-            override fun onCompleted(response: Response): Void? {
-                val contentLength = response.getHeader("Content-Length")
-                if (contentLength != null) {
-                    totalBytes = contentLength.toLong()
-                }
-                downloadThredStop.set(indiceStop, true)
-                opStream.close()
-                downloadComplete.complete(null)
-                return null
-            }
-
-            override fun onThrowable(t: Throwable) {
-                System.err.println(
-                    """
-                    
-                    Errore durante il download: ${t.message}
-                    """.trimIndent()
-                )
-                downloadThredStop.set(indiceStop, true)
+        // 4. Avvia download asincrono
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                System.err.println("\nErrore durante il download: " + e.message)
+                //AnimeDownloader.downloadThredStop.set(indiceStop, true)
                 try {
                     opStream.close()
                 } catch (ignored: IOException) {
                 }
-                downloadComplete.completeExceptionally(t)
+                downloadComplete.completeExceptionally(e)
+            }
+
+            @Throws(IOException::class)
+            override fun onResponse(call: Call, response: Response) {
+                if (!response.isSuccessful) {
+                    onFailure(call, IOException("Risposta non valida: " + response))
+                    return
+                }
+
+                var totalBytes: Long = -1
+                val clHeader = response.header("Content-Length")
+                if (clHeader != null) {
+                    totalBytes = clHeader.toLong()
+                }
+
+                try {
+                    response.body.use { body ->
+                        body.byteStream().use { input ->
+                            val buffer = ByteArray(8192)
+                            var bytesRead: Int
+
+                            while ((input.read(buffer).also { bytesRead = it }) != -1) {
+                                opStream.write(buffer, 0, bytesRead)
+                                downloadedBytes.addAndGet(bytesRead.toLong())
+                                // System.out.print("\rScaricati: " + downloadedBytes.get() + " bytes");
+                            }
+
+                            //AnimeDownloader.downloadThredStop.set(indiceStop, true)
+                            opStream.close()
+                            downloadComplete.complete(null)
+                        }
+                    }
+                } catch (e: IOException) {
+                    onFailure(call, e)
+                }
             }
         })
 
+        // 5. Attesa del completamento in modo "bloccante" (come il while del tuo codice)
         try {
-            while (!downloadThredStop.get(indiceStop));
+            downloadComplete.join() // blocca finché non completa
         } finally {
-            client.close() // CHIUSURA SICURA
+            println("Risorse chiuse correttamente.")
         }
-
-        println("Risorse chiuse correttamente.")
     }
 }
