@@ -34,29 +34,24 @@ class Download(private var fileUrl: String?, private var filePath: String?) {
     }
 
     @Throws(IOException::class)
-    fun scarica(indiceStop: Int) {
-        // 1. Configura OkHttpClient con timeout equivalenti
+    fun scarica() {
         val client = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
             .writeTimeout(600, TimeUnit.SECONDS)
             .build()
 
-        // 2. Prepara stream e variabili
         val opStream = FileOutputStream(getFile(this.fileUrl!!, this.filePath!!))
         val downloadedBytes = AtomicLong(0)
         val downloadComplete = CompletableFuture<Void?>()
 
-        // 3. Costruisci richiesta GET
         val request: Request = Request.Builder()
             .url(this.fileUrl!!)
             .build()
 
-        // 4. Avvia download asincrono
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 System.err.println("\nErrore durante il download: " + e.message)
-                //AnimeDownloader.downloadThredStop.set(indiceStop, true)
                 try {
                     opStream.close()
                 } catch (ignored: IOException) {
@@ -80,7 +75,7 @@ class Download(private var fileUrl: String?, private var filePath: String?) {
                 try {
                     response.body.use { body ->
                         body.byteStream().use { input ->
-                            val buffer = ByteArray(8192)
+                            val buffer = ByteArray(64 * 1024) //64 kB alla volta
                             var bytesRead: Int
 
                             while ((input.read(buffer).also { bytesRead = it }) != -1) {
@@ -89,7 +84,6 @@ class Download(private var fileUrl: String?, private var filePath: String?) {
                                 // System.out.print("\rScaricati: " + downloadedBytes.get() + " bytes");
                             }
 
-                            //AnimeDownloader.downloadThredStop.set(indiceStop, true)
                             opStream.close()
                             downloadComplete.complete(null)
                         }
@@ -100,7 +94,6 @@ class Download(private var fileUrl: String?, private var filePath: String?) {
             }
         })
 
-        // 5. Attesa del completamento in modo "bloccante" (come il while del tuo codice)
         try {
             downloadComplete.join() // blocca finché non completa
         } finally {

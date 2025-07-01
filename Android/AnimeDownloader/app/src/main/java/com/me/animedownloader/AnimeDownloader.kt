@@ -27,7 +27,7 @@ fun addDownload(
         val iStop = downloadThredStop.size - 1
         val d = Download(episodi[nEp - 1], cartella.absolutePath + slash)
         try {
-            d.scarica(iStop)
+            d.scarica()
         } catch (e: IOException) {
         }
     })

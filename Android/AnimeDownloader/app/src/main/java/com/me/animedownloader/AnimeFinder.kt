@@ -23,65 +23,67 @@ class AnimeFinder {
         @JvmStatic
         @Throws(IOException::class)
         fun getAnime(
-            anime: ArrayList<String>,
             nEpisodes: ArrayList<Int>,
             abslouteITA: ArrayList<Boolean>,
             startValues: ArrayList<Int>,
-            activity: ComponentActivity,
-            contesto: Context
-        ){
+            contesto: Context,
+            uriString: String
+        ): ArrayList<String> {
+            var retArr = ArrayList<String>()
 
-            val prefs = contesto.getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
-            val uriString = prefs.getString("persisted_uri", null)
+            val uri = uriString.toUri()
 
-            if(uriString != null){
-                val uri = uriString.toUri()
+            try {
+                val inputStream = contesto.contentResolver.openInputStream(uri)
+                val content = inputStream?.bufferedReader()?.use { it.readText() }
 
-                try {
-                    val inputStream = contesto.contentResolver.openInputStream(uri)
-                    val content = inputStream?.bufferedReader()?.use { it.readText() }
-
-                    if (content != null) {
-                        reader(content, anime, nEpisodes, abslouteITA, startValues)
-                    }else {
-                        val message = "Riferimenti agli anime mancanti\nCercali su GitHub..."
-                        val duration = Toast.LENGTH_LONG
-                        val errorMessage = Toast.makeText(contesto, message, duration)
-                        errorMessage.show()
-                        exitProcess(0)
-                    }
-                } catch (e: Exception){ e.printStackTrace() }
-            }else {
-                val filePicker = PickTxt(activity, activity.contentResolver, contesto)
-                fun start(){
-                    CoroutineScope(Dispatchers.Main).launch {
-                        val content = filePicker.pickTextFile()
-
-                        if (content != null) {
-                            reader(content, anime, nEpisodes, abslouteITA, startValues)
-                        }else {
-                            val message = "Riferimenti agli anime mancanti\nCercali su GitHub..."
-                            val duration = Toast.LENGTH_LONG
-                            val errorMessage = Toast.makeText(contesto, message, duration)
-                            errorMessage.show()
-                            exitProcess(0)
-                        }
-                    }
+                if (content != null) {
+                    retArr = reader(content, nEpisodes, abslouteITA, startValues)
+                }else {
+                    val message = "Riferimenti agli anime mancanti\nCercali su GitHub..."
+                    val duration = Toast.LENGTH_LONG
+                    val errorMessage = Toast.makeText(contesto, message, duration)
+                    errorMessage.show()
+                    exitProcess(0)
                 }
+            } catch (e: Exception){ e.printStackTrace() }
 
-                start()
+            return retArr
+        }
+
+        suspend fun pickAnimeFile(
+            filePick: PickTxt,
+            contesto: Context,
+            nEpisodes: ArrayList<Int>,
+            abslouteITA: ArrayList<Boolean>,
+            startValues: ArrayList<Int>
+        ): ArrayList<String> {
+            var retArr = ArrayList<String>()
+
+            val content = filePick.pickTextFile()
+
+            if (content != null) {
+                retArr = reader(content, nEpisodes, abslouteITA, startValues)
+            }else {
+                val message = "Riferimenti agli anime mancanti\nCercali su GitHub..."
+                val duration = Toast.LENGTH_LONG
+                val errorMessage = Toast.makeText(contesto, message, duration)
+                errorMessage.show()
+                exitProcess(0)
             }
+
+            return retArr
         }
 
         @JvmStatic
         @Throws(IOException::class)
         private fun reader(
             x: String,
-            arr: ArrayList<String>,
             nEps: ArrayList<Int>,
             absITA: ArrayList<Boolean>,
             starters: ArrayList<Int>
-        ) {
+        ): ArrayList<String> {
+            var arr = ArrayList<String>()
             val str = StringBuilder()
             val eps = StringBuilder()
             val starterStr = StringBuilder()
@@ -138,6 +140,8 @@ class AnimeFinder {
                         .toInt() > 0) starters.add(starterStr.toString().trim().toInt())
                 starters.add(1)
             } else starters.add(1)
+
+            return arr
         }
     }
 }

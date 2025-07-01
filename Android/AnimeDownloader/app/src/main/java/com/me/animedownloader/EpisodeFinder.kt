@@ -1,11 +1,60 @@
 package com.me.animedownloader
 
+import android.content.Context
+import android.widget.Toast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.ExecutionException
 
+@Throws(IOException::class, ExecutionException::class, InterruptedException::class)
+fun loadEpisodeList(
+    selected: Int,
+    epScelto: Int,
+    contesto: Context,
+    onSearching:(Boolean) -> Unit,
+    scope: CoroutineScope,
+    onEpFind:(Int) -> Unit
+) {
+    var selezionato = epScelto
+    if (epScelto > 0 && epScelto < MainActivity.nEpisodes[selected] * 10) if (epScelto - 25 > 0) selezionato =
+        epScelto - 25
+
+    MainActivity.startVals[selected] = selezionato
+
+    scope.launch {
+        withContext(Dispatchers.IO){
+            onSearching(true)
+            onEpFind(0)
+            try {
+                MainActivity.episodi = getEpisodeList(
+                    MainActivity.anime[selected],
+                    MainActivity.nEpisodes[selected],
+                    MainActivity.abslouteITA[selected],
+                    MainActivity.startVals[selected]
+                )
+            } catch (e: IOException) {
+                Toast.makeText(contesto, "Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
+            } catch (e: ExecutionException) {
+                Toast.makeText(contesto, "Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
+            } catch (e: InterruptedException) {
+                Toast.makeText(contesto, "Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
+            }
+            onSearching(false)
+            val len = MainActivity.episodi?.size
+            onEpFind(
+                if(len != null)
+                    len
+                else 0
+            )
+        }
+    }
+}
 
 @Throws(IOException::class, ExecutionException::class, InterruptedException::class)
 fun getEpisodeList(
@@ -26,7 +75,7 @@ fun getEpisodeList(
             episodes.add(name)
         }
         i++
-        if (i > start + 100) break
+        if (i > start + 50) break
     }
 
     return episodes
