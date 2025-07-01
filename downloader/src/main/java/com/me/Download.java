@@ -69,7 +69,7 @@ public class Download {
                 try (ResponseBody body = response.body();
                     InputStream input = body.byteStream()) {
 
-                    byte[] buffer = new byte[8192];
+                    byte[] buffer = new byte[64 * 1024]; //64 kB per volta
                     int bytesRead;
 
                     while ((bytesRead = input.read(buffer)) != -1) {

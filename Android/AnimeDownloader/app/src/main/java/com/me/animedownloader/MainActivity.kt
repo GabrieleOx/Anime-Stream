@@ -1,15 +1,12 @@
 package com.me.animedownloader
 
 import android.content.Context
-import android.media.Image
 import android.os.Bundle
-import android.text.Layout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +15,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -32,7 +29,6 @@ import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -51,29 +47,28 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import com.me.animedownloader.ui.theme.AnimeDownloaderTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.io.IOException
-import java.nio.file.WatchEvent
-import java.util.Scanner
 import java.util.concurrent.ExecutionException
 
 data class BottomNavItem(
@@ -129,6 +124,7 @@ class MainActivity : ComponentActivity() {
                 val (selectedAnime, onAnimeSelected) = remember { mutableStateOf(String()) }
                 val scope = rememberCoroutineScope()
                 val (isAlive, onSearching) = remember { mutableStateOf(false) }
+                val (epCount, onEpFind) = remember { mutableStateOf(0) }
                 val items = listOf<BottomNavItem>(
                     BottomNavItem(
                         title = "Anime",
@@ -140,6 +136,7 @@ class MainActivity : ComponentActivity() {
                         title = "Episodi",
                         selectedItem = Icons.Filled.Dashboard,
                         unselectedIcon = Icons.Outlined.Dashboard,
+                        badgeCount = epCount,
                         hasNews = false
                     ),
                     BottomNavItem(
@@ -164,7 +161,6 @@ class MainActivity : ComponentActivity() {
                                         selected = selectedItemIndex == index,
                                         onClick = {
                                             selectedItemIndex = index
-                                            // navController.navigate(item.title)
                                         },
                                         label = {
                                             Text(text = item.title)
@@ -172,7 +168,7 @@ class MainActivity : ComponentActivity() {
                                         icon = {
                                             BadgedBox(
                                                 badge = {
-                                                    if(item.badgeCount != null)
+                                                    if(item.badgeCount != null && item.badgeCount > 0)
                                                         Badge{
                                                             Text(text = item.badgeCount.toString())
                                                         }
@@ -193,9 +189,9 @@ class MainActivity : ComponentActivity() {
                         }
                     ) { innerPadding ->
                         if(selectedItemIndex == 0)
-                            AnimeScreen(innerPadding, anime, viewModel, this, selectedAnime, onAnimeSelected, isAlive, onSearching, scope)
+                            AnimeScreen(innerPadding, anime, viewModel, this, selectedAnime, onAnimeSelected, isAlive, onSearching, scope, onEpFind)
                         else if(selectedItemIndex == 1)
-                            EpisodeScreen(innerPadding, scope)
+                            EpisodeScreen(innerPadding, scope, isAlive)
                         else AvailableListScreen(innerPadding)
                     }
                 }
@@ -214,7 +210,8 @@ fun AnimeScreen(
     onAnimeSelected:(String) -> Unit,
     isAlive: Boolean,
     onSearching:(Boolean) -> Unit,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    onEpFind:(Int) -> Unit
 ) {
     var indexAnimeScelto by remember { mutableIntStateOf(0) }
     Box(
@@ -290,11 +287,11 @@ fun AnimeScreen(
         SelectionDialog (
             onDismiss = {
                 viewModel.onDismissDialog()
-                loadEpisodeList(indexAnimeScelto, 0, contesto, onSearching, scope)
+                loadEpisodeList(indexAnimeScelto, 0, contesto, onSearching, scope, onEpFind)
             },
             onConfirm = { scelto ->
                 viewModel.onDismissDialog()
-                loadEpisodeList(indexAnimeScelto, scelto, contesto, onSearching, scope)
+                loadEpisodeList(indexAnimeScelto, scelto, contesto, onSearching, scope, onEpFind)
             },
             contesto
         )
@@ -304,8 +301,20 @@ fun AnimeScreen(
 @Composable
 fun EpisodeScreen(
     p: PaddingValues,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    isAlive: Boolean
 ) {
+    val contesto = LocalContext.current
+
+    val imageLoader = ImageLoader.Builder(contesto)
+        .components {
+            add(
+                if(android.os.Build.VERSION.SDK_INT >= 28)
+                    ImageDecoderDecoder.Factory()
+                else GifDecoder.Factory()
+            )
+        }.build()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -319,21 +328,36 @@ fun EpisodeScreen(
                 .padding(bottom = 100.dp)
         )
 
-        if(MainActivity.episodi == null){
-            Row (
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(p),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Ancora nulla qui...",
+        if(MainActivity.episodi == null || isAlive){
+            if(!isAlive){
+                Row (
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontSize = 26.sp,
-                    fontFamily = BitcountFontFamily,
-                    fontWeight = FontWeight.Bold
+                        .fillMaxSize()
+                        .padding(p),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Ancora nulla qui...",
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        fontSize = 26.sp,
+                        fontFamily = BitcountFontFamily,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }else {
+                AsyncImage(
+                    model = ImageRequest.Builder(contesto)
+                        .data(R.drawable.loading)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = null,
+                    imageLoader = imageLoader,
+                    modifier = Modifier
+                        .width(300.dp)
+                        .align(Alignment.TopCenter)
+                        .padding(top = 170.dp)
                 )
             }
         }else {
@@ -397,7 +421,8 @@ fun loadEpisodeList(
     epScelto: Int,
     contesto: Context,
     onSearching:(Boolean) -> Unit,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    onEpFind:(Int) -> Unit
 ) {
     var selezionato = epScelto
     if (epScelto > 0 && epScelto < MainActivity.nEpisodes[selected] * 10) if (epScelto - 50 > 0) selezionato =
@@ -407,8 +432,6 @@ fun loadEpisodeList(
 
     scope.launch {
         withContext(Dispatchers.IO){
-            val x =("Sono su thread: ${Thread.currentThread().name}")
-            println(x)
             onSearching(true)
             try {
                 MainActivity.episodi = getEpisodeList(
@@ -425,6 +448,12 @@ fun loadEpisodeList(
                 Toast.makeText(contesto, "3Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
             }
             onSearching(false)
+            val len = MainActivity.episodi?.size
+            onEpFind(
+                if(len != null)
+                    len
+                else 0
+            )
         }
     }
 }
