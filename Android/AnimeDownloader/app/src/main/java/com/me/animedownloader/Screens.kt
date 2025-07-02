@@ -50,6 +50,7 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.me.animedownloader.MainActivity.Companion.abslouteITA
 import com.me.animedownloader.MainActivity.Companion.anime
+import com.me.animedownloader.MainActivity.Companion.animeSceltoFolder
 import com.me.animedownloader.MainActivity.Companion.nEpisodes
 import com.me.animedownloader.MainActivity.Companion.saveDirectory
 import com.me.animedownloader.MainActivity.Companion.startVals
@@ -114,7 +115,7 @@ fun AnimeScreen(
                                     enabled = saveDirectory != null,
                                     selected = currentName == selectedAnime,
                                     onClick = {
-                                        val specificAnime = creaSeNonEsiste(saveDirectory!!, getAnimeName(currentName))
+                                        animeSceltoFolder = creaSeNonEsiste(saveDirectory!!, getAnimeName(currentName))
 
                                         try {
                                             if (!isAlive) {
@@ -269,6 +270,7 @@ fun EpisodeScreen(
                             onClick = {
                                 val intent = Intent(contesto, DownloadService::class.java).apply {
                                     putExtra("download_url", episodio)
+                                    putExtra("nome_episodio", getSingleEp(episodio))
                                 }
                                 ContextCompat.startForegroundService(contesto, intent)
                             },

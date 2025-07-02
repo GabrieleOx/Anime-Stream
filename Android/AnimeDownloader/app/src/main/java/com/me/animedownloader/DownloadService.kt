@@ -3,10 +3,13 @@ package com.me.animedownloader
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.documentfile.provider.DocumentFile
+import com.me.animedownloader.MainActivity.Companion.animeSceltoFolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,44 +17,71 @@ import kotlinx.coroutines.launch
 class DownloadService : Service() {
 
     companion object {
-        private var notId = 1
         private val scope = CoroutineScope(Dispatchers.IO)
+        private var notificationCounter = 1000  // per notifiche multiple non-foreground
     }
 
     private val CHANNEL_ID = "DownloadServiceChannel"
+    private val FOREGROUND_NOTIFICATION_ID = 1
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        startForegroundWithNotification("Servizio di download attivo")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val url = intent?.getStringExtra("download_url")
-        if (url == null) {
-            stopSelf(startId) // Nessun URL, stoppa il servizio
+        val fileName = intent?.getStringExtra("nome_episodio")
+        if (url == null || fileName == null) {
+            stopSelf(startId)
             return START_NOT_STICKY
         }
 
-        val currentNotificationId = notId++
+        val fatherFolder = animeSceltoFolder
+        if (fatherFolder == null) {
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
+
+        // Notifica separata per il singolo download (non foreground)
+        val downloadNotificationId = notificationCounter++
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Download in corso")
-            .setContentText("Scaricando: $url")
-            .setSmallIcon(R.drawable.icona) // metti la tua icona
+            .setContentText("Scaricando: $fileName")
+            .setProgress(0, 0, true)
+            .setSmallIcon(android.R.drawable.stat_sys_download)
             .build()
 
-        // Avvia il servizio in foreground con notifica unica per questo download
-        startForeground(currentNotificationId, notification)
+        // Mostra la notifica non-foreground per il download attivo
+        notificationManager.notify(downloadNotificationId, notification)
 
         scope.launch {
-            doDownload(url)
-            stopSelf(startId)  // Ferma il servizio per questo startId quando finito
+            doDownload(url, fatherFolder, applicationContext, fileName)
+            // Quando finito, rimuovi la notifica download specifica
+            notificationManager.cancel(downloadNotificationId)
+
+            stopSelf(startId)
         }
 
         return START_STICKY
     }
 
-    private suspend fun doDownload(url: String) {
-        val d = Download(url, "Path")
+    private fun startForegroundWithNotification(text: String) {
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Download Service")
+            .setContentText(text)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setOngoing(true)  // notifiche foreground non cancellabili dall'utente
+            .build()
+
+        startForeground(FOREGROUND_NOTIFICATION_ID, notification)
+    }
+
+    private suspend fun doDownload(url: String, folder: DocumentFile, cont: Context, name: String) {
+        val d = Download(url, folder, cont, name)
         d.scarica()
     }
 
@@ -64,7 +94,7 @@ class DownloadService : Service() {
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID,
                 "Canale download",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_LOW
             )
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(serviceChannel)

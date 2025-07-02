@@ -1,7 +1,10 @@
 package com.me.animedownloader
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -42,6 +45,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.me.animedownloader.AnimeFinder
 import com.me.animedownloader.MainActivity.Companion.saveDirectory
 import com.me.animedownloader.ui.theme.AnimeDownloaderTheme
+import java.io.OutputStream
 
 data class BottomNavItem(
     val title: String,
@@ -85,6 +89,9 @@ class MainActivity : ComponentActivity() {
 
         @JvmStatic
         var saveDirectory: DocumentFile? = null
+
+        @JvmStatic
+        var animeSceltoFolder: DocumentFile? = null
     }
 
     lateinit var pickTxt: PickTxt
@@ -92,6 +99,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+            }
+        }
 
         pickTxt  = PickTxt(this, contentResolver, this@MainActivity)
         pickDirectory = PickDirectory(this, this@MainActivity)
@@ -225,4 +238,20 @@ fun creaSeNonEsiste(
     }else {
         exists
     }
+}
+
+@SuppressLint("Recycle")
+fun creaOutputStream(
+    contesto: Context,
+    fatherFolder: DocumentFile,
+    fileName: String,
+    fileType: String
+): OutputStream?{
+    val newFile = fatherFolder.createFile(fileType, fileName)
+
+    if(newFile != null){
+        val outputStream = contesto.contentResolver.openOutputStream(newFile.uri)
+        return outputStream
+    }
+    return null
 }
