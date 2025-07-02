@@ -2,7 +2,9 @@ package com.me.animedownloader
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultCaller
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.documentfile.provider.DocumentFile
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
@@ -48,6 +51,7 @@ import coil.request.ImageRequest
 import com.me.animedownloader.MainActivity.Companion.abslouteITA
 import com.me.animedownloader.MainActivity.Companion.anime
 import com.me.animedownloader.MainActivity.Companion.nEpisodes
+import com.me.animedownloader.MainActivity.Companion.saveDirectory
 import com.me.animedownloader.MainActivity.Companion.startVals
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -66,6 +70,7 @@ fun AnimeScreen(
     onEpFind:(Int) -> Unit
 ) {
     var indexAnimeScelto by remember { mutableIntStateOf(0) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -106,8 +111,11 @@ fun AnimeScreen(
                             modifier = Modifier
                                 .fillParentMaxWidth()
                                 .selectable(
+                                    enabled = saveDirectory != null,
                                     selected = currentName == selectedAnime,
                                     onClick = {
+                                        val specificAnime = creaSeNonEsiste(saveDirectory!!, getAnimeName(currentName))
+
                                         try {
                                             if (!isAlive) {
                                                 onAnimeSelected(currentName)
@@ -208,7 +216,7 @@ fun EpisodeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Ancora nulla qui...",
+                        text = "Ancora nulla qui...\n\n (Ricorda di scegliere dove effettuare i download nelle impo.)",
                         modifier = Modifier
                             .fillMaxWidth(),
                         textAlign = TextAlign.Center,
@@ -255,7 +263,6 @@ fun EpisodeScreen(
                     verticalArrangement = Arrangement.spacedBy(5.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val eps = MainActivity.episodi
                     itemsIndexed(MainActivity.episodi as List<String>){ index, episodio ->
                         EpisodeButton(
                             text = getSingleEp(episodio),
@@ -264,7 +271,8 @@ fun EpisodeScreen(
                                     putExtra("download_url", episodio)
                                 }
                                 ContextCompat.startForegroundService(contesto, intent)
-                            }
+                            },
+                            enabled = saveDirectory != null
                         )
                     }
                 }
@@ -292,10 +300,12 @@ fun AvailableListScreen(p: PaddingValues) {
 @Composable
 fun SettingsScreen(
     p: PaddingValues,
-    picker: PickTxt
+    txtPicker: PickTxt,
+    dirPicker: PickDirectory
 ){
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val caller = context as? ActivityResultCaller
 
     Box(
         modifier = Modifier
@@ -334,7 +344,7 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         scope.launch {
-                            anime = AnimeFinder.pickAnimeFile(picker, context, nEpisodes, abslouteITA, startVals)
+                            anime = AnimeFinder.pickAnimeFile(txtPicker, context, nEpisodes, abslouteITA, startVals)
                         }
                     },
                     modifier = Modifier
@@ -367,7 +377,10 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         scope.launch {
-                            anime = AnimeFinder.pickAnimeFile(picker, context, nEpisodes, abslouteITA, startVals)
+                            val folderuri = dirPicker.pickFolderAndPersist()
+                            if(folderuri != null){
+                                saveDirectory = creaSeNonEsiste(context, folderuri, "AnimeDownload")
+                            }
                         }
                     },
                     modifier = Modifier

@@ -1,7 +1,9 @@
 package com.me.animedownloader
 
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -36,7 +38,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.documentfile.provider.DocumentFile
 import com.me.animedownloader.AnimeFinder
+import com.me.animedownloader.MainActivity.Companion.saveDirectory
 import com.me.animedownloader.ui.theme.AnimeDownloaderTheme
 
 data class BottomNavItem(
@@ -78,20 +82,31 @@ class MainActivity : ComponentActivity() {
 
         @JvmStatic
         var abslouteITA: ArrayList<Boolean> = ArrayList()
+
+        @JvmStatic
+        var saveDirectory: DocumentFile? = null
     }
 
     lateinit var pickTxt: PickTxt
+    lateinit var pickDirectory: PickDirectory
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        pickTxt  = PickTxt(this, contentResolver, this)
+        pickTxt  = PickTxt(this, contentResolver, this@MainActivity)
+        pickDirectory = PickDirectory(this, this@MainActivity)
 
         val prefs = this@MainActivity.getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
-        val uriString = prefs.getString("persisted_uri", null)
+        val txtUri = prefs.getString("persisted_uri", null)
 
-        if(uriString != null){
-            anime = AnimeFinder.getAnime(nEpisodes, abslouteITA, startVals, this, uriString)
+        if(txtUri != null){
+            anime = AnimeFinder.getAnime(nEpisodes, abslouteITA, startVals, this, txtUri)
+        }
+
+        val folderuri = pickDirectory.getPersistedFolderUri()
+
+        if(folderuri != null){
+            saveDirectory = creaSeNonEsiste(this@MainActivity, folderuri, "AnimeDownload")
         }
 
             setContent {
@@ -175,10 +190,39 @@ class MainActivity : ComponentActivity() {
                             EpisodeScreen(innerPadding, isAlive)
                         else if(selectedItemIndex == 2)
                             AvailableListScreen(innerPadding)
-                        else SettingsScreen(innerPadding, pickTxt)
+                        else SettingsScreen(innerPadding, pickTxt, pickDirectory)
                     }
                 }
             }
         }
+    }
+}
+
+fun creaSeNonEsiste(
+    context: Context,
+    folderUri: Uri,
+    folderName: String
+): DocumentFile? {
+    val directory = DocumentFile.fromTreeUri(context, folderUri) ?: return null
+
+    val exists = directory?.findFile(folderName)
+
+    return if (exists == null || !exists.isDirectory) {
+        directory.createDirectory(folderName)
+    }else {
+        exists
+    }
+}
+
+fun creaSeNonEsiste(
+    father: DocumentFile,
+    folderName: String
+): DocumentFile? {
+    val exists = father.findFile(folderName)
+
+    return if (exists == null || !exists.isDirectory) {
+        father.createDirectory(folderName)
+    }else {
+        exists
     }
 }

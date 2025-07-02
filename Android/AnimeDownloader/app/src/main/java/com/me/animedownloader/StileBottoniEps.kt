@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.sp
 fun EpisodeButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean,
 ) {
     Button(
         onClick = onClick,
@@ -30,7 +31,8 @@ fun EpisodeButton(
         ),
         modifier = modifier
             .fillMaxWidth(0.85f)
-            .padding(vertical = 6.dp)
+            .padding(vertical = 6.dp),
+        enabled = enabled
     ) {
         Text(
             text = text,
