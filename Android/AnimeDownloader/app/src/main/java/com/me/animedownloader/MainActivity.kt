@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -42,8 +41,6 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.documentfile.provider.DocumentFile
-import com.me.animedownloader.AnimeFinder
-import com.me.animedownloader.MainActivity.Companion.saveDirectory
 import com.me.animedownloader.ui.theme.AnimeDownloaderTheme
 import java.io.OutputStream
 
@@ -109,7 +106,7 @@ class MainActivity : ComponentActivity() {
         pickTxt  = PickTxt(this, contentResolver, this@MainActivity)
         pickDirectory = PickDirectory(this, this@MainActivity)
 
-        val prefs = this@MainActivity.getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
+        val prefs = this@MainActivity.getSharedPreferences("my_prefs", MODE_PRIVATE)
         val txtUri = prefs.getString("persisted_uri", null)
 
         if(txtUri != null){
@@ -127,8 +124,8 @@ class MainActivity : ComponentActivity() {
                 val (selectedAnime, onAnimeSelected) = remember { mutableStateOf(String()) }
                 val scope = rememberCoroutineScope()
                 val (isAlive, onSearching) = remember { mutableStateOf(false) }
-                val (epCount, onEpFind) = remember { mutableStateOf(0) }
-                val items = listOf<BottomNavItem>(
+                val (epCount, onEpFind) = remember { mutableIntStateOf(0) }
+                val items = listOf(
                     BottomNavItem(
                         title = "Anime",
                         selectedItem = Icons.Filled.Archive,
@@ -197,13 +194,12 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     ) { innerPadding ->
-                        if(selectedItemIndex == 0)
-                            AnimeScreen(innerPadding, anime, viewModel, this, selectedAnime, onAnimeSelected, isAlive, onSearching, scope, onEpFind)
-                        else if(selectedItemIndex == 1)
-                            EpisodeScreen(innerPadding, isAlive)
-                        else if(selectedItemIndex == 2)
-                            AvailableListScreen(innerPadding)
-                        else SettingsScreen(innerPadding, pickTxt, pickDirectory)
+                        when (selectedItemIndex) {
+                            0 -> AnimeScreen(innerPadding, anime, viewModel, this, selectedAnime, onAnimeSelected, isAlive, onSearching, scope, onEpFind)
+                            1 -> EpisodeScreen(innerPadding, isAlive)
+                            2 -> AvailableListScreen(innerPadding)
+                            else -> SettingsScreen(innerPadding, pickTxt, pickDirectory)
+                        }
                     }
                 }
             }
@@ -218,7 +214,7 @@ fun creaSeNonEsiste(
 ): DocumentFile? {
     val directory = DocumentFile.fromTreeUri(context, folderUri) ?: return null
 
-    val exists = directory?.findFile(folderName)
+    val exists = directory.findFile(folderName)
 
     return if (exists == null || !exists.isDirectory) {
         directory.createDirectory(folderName)

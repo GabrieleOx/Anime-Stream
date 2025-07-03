@@ -1,9 +1,5 @@
 package com.me.animedownloader
 
-import java.io.File
-import java.io.IOException
-import kotlin.concurrent.Volatile
-
 
 fun getSingleEp(episodeUrl: String): String {
     var j = episodeUrl.length - 4

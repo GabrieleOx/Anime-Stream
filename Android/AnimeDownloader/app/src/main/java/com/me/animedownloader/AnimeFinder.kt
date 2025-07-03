@@ -1,21 +1,10 @@
 package com.me.animedownloader
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.appcompat.app.AppCompatActivity
-import androidx.documentfile.provider.DocumentFile
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileInputStream
+import androidx.core.net.toUri
 import java.io.IOException
 import kotlin.system.exitProcess
-import androidx.core.net.toUri
 
 
 class AnimeFinder {
@@ -58,7 +47,7 @@ class AnimeFinder {
             abslouteITA: ArrayList<Boolean>,
             startValues: ArrayList<Int>
         ): ArrayList<String> {
-            var retArr = ArrayList<String>()
+            var retArr: ArrayList<String>
 
             val content = filePick.pickTextFile()
 
@@ -83,11 +72,10 @@ class AnimeFinder {
             absITA: ArrayList<Boolean>,
             starters: ArrayList<Int>
         ): ArrayList<String> {
-            var arr = ArrayList<String>()
+            val arr = ArrayList<String>()
             val str = StringBuilder()
             val eps = StringBuilder()
             val starterStr = StringBuilder()
-            var ch: Int
             var spaces = 0
             var num = false
             var abs = false

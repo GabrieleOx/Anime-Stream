@@ -41,8 +41,8 @@ class Download(
             override fun onFailure(call: Call, e: IOException) {
                 System.err.println("\nErrore durante il download: " + e.message)
                 try {
-                    opStream?.close()
-                } catch (ignored: IOException) {
+                    opStream.close()
+                } catch (_: IOException) {
                 }
                 downloadComplete.completeExceptionally(e)
             }
@@ -50,7 +50,7 @@ class Download(
             @Throws(IOException::class)
             override fun onResponse(call: Call, response: Response) {
                 if (!response.isSuccessful) {
-                    onFailure(call, IOException("Risposta non valida: " + response))
+                    onFailure(call, IOException("Risposta non valida: $response"))
                     return
                 }
 
@@ -67,12 +67,12 @@ class Download(
                             var bytesRead: Int
 
                             while ((input.read(buffer).also { bytesRead = it }) != -1) {
-                                opStream?.write(buffer, 0, bytesRead)
+                                opStream.write(buffer, 0, bytesRead)
                                 downloadedBytes.addAndGet(bytesRead.toLong())
                                 // System.out.print("\rScaricati: " + downloadedBytes.get() + " bytes");
                             }
 
-                            opStream?.close()
+                            opStream.close()
                             downloadComplete.complete(null)
                         }
                     }

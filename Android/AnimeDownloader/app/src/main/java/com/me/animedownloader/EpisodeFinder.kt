@@ -38,11 +38,11 @@ fun loadEpisodeList(
                     MainActivity.abslouteITA[selected],
                     MainActivity.startVals[selected]
                 )
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 Toast.makeText(contesto, "Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
-            } catch (e: ExecutionException) {
+            } catch (_: ExecutionException) {
                 Toast.makeText(contesto, "Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
-            } catch (e: InterruptedException) {
+            } catch (_: InterruptedException) {
                 Toast.makeText(contesto, "Errore nel caricamento degli episodi...", Toast.LENGTH_SHORT).show()
             }
             onSearching(false)
@@ -91,10 +91,6 @@ fun isPresent(url: String, client: OkHttpClient): Boolean {
         ret = statusCode == 200
     }
     return ret
-}
-
-private fun changeRet(arr: BooleanArray, `val`: Boolean) {
-    arr[0] = `val`
 }
 
 private fun nameComposer(

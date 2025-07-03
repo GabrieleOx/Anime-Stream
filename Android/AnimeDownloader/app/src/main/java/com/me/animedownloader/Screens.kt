@@ -2,11 +2,7 @@ package com.me.animedownloader
 
 import android.content.Context
 import android.content.Intent
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.result.ActivityResultCaller
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,16 +13,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -42,7 +41,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.documentfile.provider.DocumentFile
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
@@ -258,7 +256,6 @@ fun EpisodeScreen(
                 )
                 LazyColumn (
                     modifier = Modifier
-                        .selectableGroup()
                         .padding(horizontal = 20.dp)
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(5.dp),
@@ -289,13 +286,67 @@ fun AvailableListScreen(p: PaddingValues) {
             .fillMaxSize()
     ){
         Image(
-            painter = painterResource(R.drawable.blackbutler),
+            painter = painterResource(R.drawable.anya),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .matchParentSize()
                 .padding(bottom = 100.dp)
         )
+
+        if(saveDirectory != null){
+            Column (
+                modifier = Modifier
+                    .padding(p)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Text(
+                    text = "Episodi disponibii:",
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = PressStart2PFontFamily
+                )
+                LazyColumn {
+                    items(saveDirectory!!.listFiles()){ file ->
+                        var showEps by remember { mutableStateOf(false) }
+
+                        if(file.isDirectory){
+                            Column {
+                                FolderButton(
+                                    text = file.name!!,
+                                    onClick = { showEps = !showEps }
+                                )
+                                if(showEps){
+                                    for (video in file.listFiles()){
+                                        if(!video.isDirectory && video != null){
+                                            Row (
+                                                modifier = Modifier
+                                                    .padding(start = 30.dp)
+                                            ){
+                                                VideoButton(
+                                                    text = video.name!!,
+                                                    onClick = { TODO() }
+                                                )
+                                                DeleteButton(
+                                                    onClick = {
+                                                        showEps = false
+                                                        video.delete()
+                                                        showEps = true
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -307,7 +358,6 @@ fun SettingsScreen(
 ){
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val caller = context as? ActivityResultCaller
 
     Box(
         modifier = Modifier
