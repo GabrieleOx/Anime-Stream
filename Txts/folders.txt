@@ -7,3 +7,8 @@ https://srv29.sushi.streampeaker.org/DDL/ANIME/BlackLagoon/ 10 @
 https://srv28.panya.streampeaker.org/DDL/ANIME/BlackLagoonRobertasBloodTrail/ 10 @
 https://srv29.sushi.streampeaker.org/DDL/ANIME/DarlingInTheFranXX/ 10
 https://srv18-tsurukusa.sweetpixel.org/DDL/ANIME/OnePieceSUBITA/ 1000 801
+https://srv30.sake.streampeaker.org/DDL/ANIME/DosankoGalWaNamaraMenkoi/ 10
+https://srv15.neko.streampeaker.org/DDL/ANIME/SousouNoFrieren/ 10
+https://srv35.yuenchi.streampeaker.org/DDL/ANIME/Trigun/ 10 @
+https://srv21.kurai.streampeaker.org/DDL/ANIME/HellsingITA/ 10
+https://srv38.fukurou.streampeaker.org/DDL/ANIME/HellsingUltimateITA/ 10
