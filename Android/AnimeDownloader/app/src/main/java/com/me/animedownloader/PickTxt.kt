@@ -9,6 +9,7 @@ import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.ActivityResultLauncher
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import androidx.core.content.edit
 
 class PickTxt(
     caller: ActivityResultCaller, // può essere Activity o Fragment
@@ -27,7 +28,7 @@ class PickTxt(
                     )
 
                     val prefs = contesto.getSharedPreferences("my_prefs", AppCompatActivity.MODE_PRIVATE)
-                    prefs.edit().putString("persisted_uri", uri.toString()).apply()
+                    prefs.edit { putString("persisted_uri", uri.toString()) }
 
                     val content = readTextFromUri(uri)
                     continuation(Result.success(content))

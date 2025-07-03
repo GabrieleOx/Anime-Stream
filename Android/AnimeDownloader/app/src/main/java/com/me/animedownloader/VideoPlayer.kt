@@ -2,9 +2,7 @@ package com.me.animedownloader
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.media3.exoplayer.analytics.AnalyticsListener

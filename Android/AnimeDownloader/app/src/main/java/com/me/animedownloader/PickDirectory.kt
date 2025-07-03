@@ -9,6 +9,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import androidx.core.net.toUri
+import androidx.core.content.edit
 
 class PickDirectory(
     caller: ActivityResultCaller,
@@ -44,11 +46,11 @@ class PickDirectory(
     fun getPersistedFolderUri(): Uri? {
         val prefs = context.getSharedPreferences("my_prefs", AppCompatActivity.MODE_PRIVATE)
         val uriString = prefs.getString("persisted_folder_uri", null)
-        return uriString?.let { Uri.parse(it) }
+        return uriString?.toUri()
     }
 
     private fun persistFolderUri(uri: Uri) {
         val prefs = context.getSharedPreferences("my_prefs", AppCompatActivity.MODE_PRIVATE)
-        prefs.edit().putString("persisted_folder_uri", uri.toString()).apply()
+        prefs.edit { putString("persisted_folder_uri", uri.toString()) }
     }
 }
