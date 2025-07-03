@@ -2,6 +2,7 @@ package com.me.animedownloader
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -9,6 +10,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Airplay
@@ -37,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.TestModifierUpdaterLayout
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -89,6 +92,9 @@ class MainActivity : ComponentActivity() {
 
         @JvmStatic
         var animeSceltoFolder: DocumentFile? = null
+
+        @JvmStatic
+        var videoSelezionato: Uri? = null
     }
 
     lateinit var pickTxt: PickTxt
@@ -125,6 +131,7 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val (isAlive, onSearching) = remember { mutableStateOf(false) }
                 val (epCount, onEpFind) = remember { mutableIntStateOf(0) }
+                val (isFullScreen, goFullScreen) = remember { mutableStateOf(false) }
                 val items = listOf(
                     BottomNavItem(
                         title = "Anime",
@@ -155,51 +162,65 @@ class MainActivity : ComponentActivity() {
                 var selectedItemIndex by rememberSaveable {
                     mutableIntStateOf(0)
                 }
-                Surface (
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Scaffold (
-                        bottomBar = {
-                            NavigationBar {
-                                items.forEachIndexed { index, item ->
-                                    NavigationBarItem(
-                                        selected = selectedItemIndex == index,
-                                        onClick = {
-                                            selectedItemIndex = index
-                                        },
-                                        label = {
-                                            Text(text = item.title)
-                                        },
-                                        icon = {
-                                            BadgedBox(
-                                                badge = {
-                                                    if(item.badgeCount != null && item.badgeCount > 0)
-                                                        Badge{
-                                                            Text(text = item.badgeCount.toString())
-                                                        }
-                                                    else if(item.hasNews)
-                                                        Badge()
+                if(!isFullScreen){
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    Surface (
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        Scaffold (
+                            bottomBar = {
+                                NavigationBar {
+                                    items.forEachIndexed { index, item ->
+                                        NavigationBarItem(
+                                            selected = selectedItemIndex == index,
+                                            onClick = {
+                                                selectedItemIndex = index
+                                            },
+                                            label = {
+                                                Text(text = item.title)
+                                            },
+                                            icon = {
+                                                BadgedBox(
+                                                    badge = {
+                                                        if(item.badgeCount != null && item.badgeCount > 0)
+                                                            Badge{
+                                                                Text(text = item.badgeCount.toString())
+                                                            }
+                                                        else if(item.hasNews)
+                                                            Badge()
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if(selectedItemIndex == index) item.selectedItem else item.unselectedIcon,
+                                                        contentDescription = item.title
+                                                    )
                                                 }
-                                            ) {
-                                                Icon(
-                                                    imageVector = if(selectedItemIndex == index) item.selectedItem else item.unselectedIcon,
-                                                    contentDescription = item.title
-                                                )
-                                            }
-                                        },
-                                        alwaysShowLabel = false
-                                    )
+                                            },
+                                            alwaysShowLabel = false
+                                        )
+                                    }
                                 }
                             }
+                        ) { innerPadding ->
+                            when (selectedItemIndex) {
+                                0 -> AnimeScreen(innerPadding, anime, viewModel, this, selectedAnime, onAnimeSelected, isAlive, onSearching, scope, onEpFind)
+                                1 -> EpisodeScreen(innerPadding, isAlive)
+                                2 -> AvailableListScreen(innerPadding, goFullScreen)
+                                else -> SettingsScreen(innerPadding, pickTxt, pickDirectory)
+                            }
                         }
-                    ) { innerPadding ->
-                        when (selectedItemIndex) {
-                            0 -> AnimeScreen(innerPadding, anime, viewModel, this, selectedAnime, onAnimeSelected, isAlive, onSearching, scope, onEpFind)
-                            1 -> EpisodeScreen(innerPadding, isAlive)
-                            2 -> AvailableListScreen(innerPadding)
-                            else -> SettingsScreen(innerPadding, pickTxt, pickDirectory)
-                        }
+                    }
+                }else if(videoSelezionato != null) {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ){
+                        NewVideoPlayer(
+                            video = videoSelezionato!!,
+                            goFullScreen = goFullScreen
+                        )
                     }
                 }
             }

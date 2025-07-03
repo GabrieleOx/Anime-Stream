@@ -1,7 +1,10 @@
 package com.me.animedownloader
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,16 +16,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -52,8 +58,13 @@ import com.me.animedownloader.MainActivity.Companion.animeSceltoFolder
 import com.me.animedownloader.MainActivity.Companion.nEpisodes
 import com.me.animedownloader.MainActivity.Companion.saveDirectory
 import com.me.animedownloader.MainActivity.Companion.startVals
+import com.me.animedownloader.MainActivity.Companion.videoSelezionato
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+val LocalActivity = compositionLocalOf<Activity> {
+    error("No activity found!")
+}
 
 @Composable
 fun AnimeScreen(
@@ -280,7 +291,10 @@ fun EpisodeScreen(
     }
 }
 @Composable
-fun AvailableListScreen(p: PaddingValues) {
+fun AvailableListScreen(
+    p: PaddingValues,
+    goFullScreen:(Boolean) -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -322,21 +336,26 @@ fun AvailableListScreen(p: PaddingValues) {
                                 if(showEps){
                                     for (video in file.listFiles()){
                                         if(!video.isDirectory && video != null){
-                                            Row (
+                                            LazyRow (
                                                 modifier = Modifier
                                                     .padding(start = 30.dp)
                                             ){
-                                                VideoButton(
-                                                    text = video.name!!,
-                                                    onClick = { TODO() }
-                                                )
-                                                DeleteButton(
-                                                    onClick = {
-                                                        showEps = false
-                                                        video.delete()
-                                                        showEps = true
-                                                    }
-                                                )
+                                                item{
+                                                    VideoButton(
+                                                        text = video.name!!,
+                                                        onClick = {
+                                                            videoSelezionato = video.uri
+                                                            goFullScreen(true)
+                                                        }
+                                                    )
+                                                    DeleteButton(
+                                                        onClick = {
+                                                            showEps = false
+                                                            video.delete()
+                                                            showEps = true
+                                                        }
+                                                    )
+                                                }
                                             }
                                         }
                                     }
