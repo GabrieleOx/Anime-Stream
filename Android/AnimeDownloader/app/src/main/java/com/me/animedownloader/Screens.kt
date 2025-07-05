@@ -1,7 +1,9 @@
 package com.me.animedownloader
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.view.WindowManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +25,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.documentfile.provider.DocumentFile
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
@@ -306,7 +310,7 @@ fun AvailableListScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 Text(
-                    text = "Episodi disponibii:",
+                    text = "Episodi disponibili:",
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally),
                     fontSize = 20.sp,
@@ -324,27 +328,32 @@ fun AvailableListScreen(
                                     onClick = { showEps = !showEps }
                                 )
                                 if(showEps){
-                                    for (video in file.listFiles()){
-                                        if(!video.isDirectory && video != null){
-                                            LazyRow (
-                                                modifier = Modifier
-                                                    .padding(start = 30.dp)
-                                            ){
-                                                item{
-                                                    VideoButton(
-                                                        text = video.name!!,
-                                                        onClick = {
-                                                            videoSelezionato = video.uri
-                                                            goFullScreen(true)
-                                                        }
-                                                    )
-                                                    DeleteButton(
-                                                        onClick = {
-                                                            showEps = false
-                                                            video.delete()
-                                                            showEps = true
-                                                        }
-                                                    )
+                                    val fileOr = if(file != null)
+                                        ordinaFile(file.listFiles())
+                                    else null
+                                    if (fileOr != null) {
+                                        for (videoIndex in 0..(fileOr.size-1)){
+                                            if(!fileOr[videoIndex].isDirectory){
+                                                LazyRow (
+                                                    modifier = Modifier
+                                                        .padding(start = 30.dp)
+                                                ){
+                                                    item{
+                                                        VideoButton(
+                                                            text = fileOr[videoIndex].name!!,
+                                                            onClick = {
+                                                                videoSelezionato = fileOr.sliceArray(videoIndex until fileOr.size)
+                                                                goFullScreen(true)
+                                                            }
+                                                        )
+                                                        DeleteButton(
+                                                            onClick = {
+                                                                showEps = false
+                                                                fileOr[videoIndex].delete()
+                                                                showEps = true
+                                                            }
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -355,9 +364,85 @@ fun AvailableListScreen(
                     }
                 }
             }
+        }else {
+            Row (
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(p),
+            ) {
+                Text(
+                    text = "Nessun episodio trovato...\n\n (Ricorda di scegliere dove effettuare i download nelle impo.)",
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 26.sp,
+                    fontFamily = BitcountFontFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
+
+fun ordinaFile(
+    filePresenti: Array<DocumentFile>
+): Array<DocumentFile> {
+    var fileOrdinati = filePresenti
+    var numeri = IntArray(fileOrdinati.size)
+
+    for(i in 0..(fileOrdinati.size-1)){
+        numeri[i] = getNum(fileOrdinati[i].name!!)
+    }
+
+    insertionSort(numeri, fileOrdinati)
+
+    return fileOrdinati
+}
+
+fun getNum(
+    episodio: String
+):Int {
+    var num = ""
+    var found = false
+    var ret = 0
+
+    for(i in 0..(episodio.length-2)){
+        if(episodio[i] == '_' && episodio[i+1].isDigit()){
+            found = true
+            continue
+        }
+
+        if(found && episodio[i].isDigit()){
+            num += episodio[i]
+        }else if(found){
+            found = false
+        }
+
+        if(found && episodio[i+1] == '_'){
+            ret = num.toInt()
+            break
+        }
+    }
+    return ret
+}
+
+fun insertionSort(array: IntArray, files: Array<DocumentFile>) {
+    for (i in 1 until array.size) {
+        val key = array[i]
+        val fileKey = files[i]
+        var j = i - 1
+
+        while (j >= 0 && array[j] > key) {
+            array[j + 1] = array[j]
+            files[j + 1] = files[j]
+            j--
+        }
+
+        array[j + 1] = key
+        files[j + 1] = fileKey
+    }
+}
+
 
 @Composable
 fun SettingsScreen(
@@ -457,5 +542,34 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun VideoScreen(
+    goFullScreen:(Boolean) -> Unit
+){
+    EnableFullscreenImmersive(enable = true)
+
+    val context = LocalContext.current
+    val activity = context as Activity
+
+    DisposableEffect(Unit) {
+        val window = activity.window
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        onDispose {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ){
+        NewVideoPlayer(
+            video = videoSelezionato!!,
+            goFullScreen = goFullScreen
+        )
     }
 }

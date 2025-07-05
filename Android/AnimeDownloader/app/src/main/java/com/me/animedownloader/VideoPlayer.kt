@@ -1,10 +1,10 @@
 package com.me.animedownloader
 
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.documentfile.provider.DocumentFile
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import io.sanghun.compose.video.RepeatMode
 import io.sanghun.compose.video.VideoPlayer
@@ -13,15 +13,15 @@ import io.sanghun.compose.video.uri.VideoPlayerMediaItem
 
 @Composable
 fun NewVideoPlayer(
-    video: Uri,
+    video: Array<DocumentFile>,
     goFullScreen:(Boolean) -> Unit
 ) {
     VideoPlayer(
-        mediaItems = listOf(
+        mediaItems = video.map{ ep ->
             VideoPlayerMediaItem.StorageMediaItem(
-                storageUri = video
+                storageUri = ep.uri
             )
-        ),
+        },
         handleLifecycle = true,
         autoPlay = true,
         usePlayerController = true,
@@ -37,11 +37,10 @@ fun NewVideoPlayer(
             showBackTrackButton = true,
             showNextTrackButton = true,
             showRepeatModeButton = true,
-            controllerShowTimeMilliSeconds = 5_000,
+            controllerShowTimeMilliSeconds = 60_000,
             controllerAutoShow = true,
             showFullScreenButton = true
         ),
-        volume = 0.5f,
         repeatMode = RepeatMode.NONE,
         onCurrentTimeChanged = {
             Log.e("CurrentTime", it.toString())

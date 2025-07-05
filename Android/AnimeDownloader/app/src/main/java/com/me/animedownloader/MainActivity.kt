@@ -10,7 +10,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Airplay
@@ -93,7 +92,7 @@ class MainActivity : ComponentActivity() {
         var animeSceltoFolder: DocumentFile? = null
 
         @JvmStatic
-        var videoSelezionato: Uri? = null
+        var videoSelezionato: Array<DocumentFile>? = null
     }
 
     lateinit var pickTxt: PickTxt
@@ -212,15 +211,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }else if(videoSelezionato != null) {
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ){
-                        NewVideoPlayer(
-                            video = videoSelezionato!!,
-                            goFullScreen = goFullScreen
-                        )
-                    }
+                    VideoScreen(goFullScreen)
                 }
             }
         }
