@@ -37,7 +37,7 @@ fun NewVideoPlayer(
             showBackTrackButton = true,
             showNextTrackButton = true,
             showRepeatModeButton = true,
-            controllerShowTimeMilliSeconds = 60_000,
+            controllerShowTimeMilliSeconds = 5_000,
             controllerAutoShow = true,
             showFullScreenButton = true
         ),
